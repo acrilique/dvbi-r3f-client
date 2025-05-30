@@ -26,5 +26,6 @@ export default defineConfig({
                 "player": resolve(__dirname, "player.html")
             }
         }
-    }
+    },
+    "base": "/dvbi-r3f-client/"
 })
