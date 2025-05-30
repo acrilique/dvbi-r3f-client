@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber"
-import { Fullscreen, Text, Container, Image } from "@react-three/uikit"
+import { Fullscreen, Text, Container } from "@react-three/uikit"
 
 export function Landing() {
   return (
@@ -32,15 +32,6 @@ export function Landing() {
                 <Text color="white" fontSize={18} marginBottom={8}> - Tap the menu icon</Text>
                 <Text color="white" fontSize={18}> - Tap Add to homescreen.</Text>
               </Container>
-            </Container>
-
-            <Container
-              flexGrow={1}
-              alignItems="center"
-              justifyContent="center"
-              padding={10}
-            >
-              <Image src="/images/landingpage_ui.png" width={150} keepAspectRatio />
             </Container>
           </Container>
         </Fullscreen>

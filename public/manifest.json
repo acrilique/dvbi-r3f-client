@@ -1,11 +1,13 @@
 {
   "short_name": "DVB-I React",
   "name": "DVB-I React Application",
+  "id": "dvbi-r3f",
+  "description": "A DVB-I Client as a React PWA, mainly inspired by the work done in the DVB-I-Reference-Client, built by acrilique",
   "icons": [
     {
       "src": "images/icons-128.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "128x128"
     },
     {
       "src": "images/icons-512.png",
