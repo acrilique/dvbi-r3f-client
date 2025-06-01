@@ -4,14 +4,12 @@ import { useAppStore } from "../store/store";
 import { AvailableServiceListEntry } from "../store/types";
 
 interface SettingsViewProps {
-  isVisible: boolean;
   activePage: string | null;
   onClose: () => void;
   onNavigate: (page: string) => void;
 }
 
 export function SettingsView({
-  isVisible,
   activePage,
   onClose,
   onNavigate,
@@ -28,14 +26,10 @@ export function SettingsView({
   );
 
   useEffect(() => {
-    if (isVisible && availableServiceLists.length === 0) {
+    if (activePage && availableServiceLists.length === 0) {
       discoverAvailableServiceLists();
     }
-  }, [isVisible, availableServiceLists, discoverAvailableServiceLists]);
-
-  if (!isVisible) {
-    return null;
-  }
+  }, [activePage, availableServiceLists, discoverAvailableServiceLists]);
 
   const renderMainPage = () => (
     <Container
@@ -210,6 +204,10 @@ export function SettingsView({
     </Container>
   );
 
+  if (!activePage) {
+    return null;
+  }
+
   let pageContent;
   switch (activePage) {
     case "serviceListSelection":
@@ -225,9 +223,9 @@ export function SettingsView({
       pageContent = renderPlaceholderPage("Low Latency Settings");
       break;
     case "main":
-    default:
       pageContent = renderMainPage();
       break;
+    default:
   }
 
   return (
@@ -238,7 +236,7 @@ export function SettingsView({
       justifyContent="center"
       backgroundColor="rgb(0,0,0)"
       backgroundOpacity={0.8}
-      zIndexOffset={10} // Ensure it's above other UI elements
+      zIndexOffset={10}
     >
       {pageContent}
     </Container>

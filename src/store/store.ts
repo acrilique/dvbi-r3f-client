@@ -100,6 +100,7 @@ export interface AppActions {
 
   // Error Actions
   setGlobalError: (error: string | null) => void;
+  clearGlobalError: () => void;
 
   // Program Info Actions
   fetchNowNextForChannel: (channelId: string) => Promise<void>;
@@ -482,6 +483,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
 
   // --- Error Actions ---
   setGlobalError: (error) => set({ globalError: error }),
+  clearGlobalError: () => set({ globalError: null }),
 
   // --- Program Info Actions ---
   fetchNowNextForChannel: async (channelId) => {

@@ -1,14 +1,66 @@
-import { XR, createXRStore } from "@react-three/xr";
-import { Fullscreen, Container, Text, Image, Video } from "@react-three/uikit";
-import { Suspense, useEffect, useState, useRef, useCallback } from "react"; // useState is already here
+import {
+  Fullscreen,
+  Container,
+  Text,
+  Video,
+  DefaultProperties,
+} from "@react-three/uikit";
+import {
+  Suspense,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { MediaPlayer } from "dashjs";
 import { useAppStore } from "./store/store";
 import { SettingsView } from "./components/SettingsView";
 import { PlayerControls } from "./components/PlayerControls";
 import { ChannelListView } from "./components/ChannelListView";
-import { ThreeEvent } from "@react-three/fiber";
+import { ThreeEvent, useFrame } from "@react-three/fiber";
+import { Signal } from "@preact/signals-react";
+import { MathUtils } from "three";
 
-const xrStore = createXRStore({});
+function useDampedSignal(initialValue: number, dampingFactor = 7) {
+  const signal = useMemo(() => new Signal(initialValue), [initialValue]);
+  const target = useRef(initialValue);
+  const callbackRef = useRef<((value: number) => void) | null>(null);
+  const callbackInvokedRef = useRef(false);
+
+  useFrame((_, dt) => {
+    const newValue = MathUtils.damp(
+      signal.value,
+      target.current,
+      dampingFactor,
+      dt,
+    );
+
+    signal.value = newValue;
+
+    // Check if target is reached (within a small threshold)
+    const isTargetReached = Math.abs(newValue - target.current) < 0.001;
+
+    if (isTargetReached && callbackRef.current && !callbackInvokedRef.current) {
+      callbackRef.current(newValue);
+      callbackInvokedRef.current = true;
+    } else if (!isTargetReached) {
+      callbackInvokedRef.current = false;
+    }
+  });
+
+  const setTarget = useCallback((value: number) => {
+    target.current = value;
+    callbackInvokedRef.current = false;
+  }, []);
+
+  const onTargetReached = useCallback((callback: (value: number) => void) => {
+    callbackRef.current = callback;
+  }, []);
+
+  return [signal, setTarget, onTargetReached] as const;
+}
+
 export function Player() {
   // Global state selectors from Zustand store
   const fetchAndProcessServiceList = useAppStore(
@@ -21,11 +73,55 @@ export function Player() {
     (state) => state.isLoadingServiceList,
   );
   const globalError = useAppStore((state) => state.globalError);
+  const clearGlobalError = useAppStore((state) => state.clearGlobalError);
   const playerInstance = useAppStore((state) => state.playerInstance);
   const setPlayerInstance = useAppStore((state) => state.setPlayerInstance);
 
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
-  const [hasSourceBeenAttached, setHasSourceBeenAttached] = useState(false); // Added state
+  const [hasSourceBeenAttached, setHasSourceBeenAttached] = useState(false);
+
+  const [activeSettingsPage, setActiveSettingsPage] = useState<string | null>(
+    null,
+  );
+
+  const timeoutIdRef = useRef<number | null>(null);
+
+  // Non-modal ui visibility
+  const [opacity, setOpacity] = useDampedSignal(0);
+
+  const handleMouseMove = useCallback(() => {
+    setOpacity(1);
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+    }
+    // Set new timeout to hide UI
+    timeoutIdRef.current = window.setTimeout(() => {
+      setOpacity(0);
+    }, 2000);
+  }, [setOpacity]);
+
+  useEffect(() => {
+    // Cleanup the timeout when the component unmounts
+    return () => {
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
+    };
+  }, []);
+
+  // --- Local UI State Management ---
+  const [isEpgVisible, setIsEpgVisible] = useState(false);
+  // TODO: Define EpgViewState type locally or import if moved to a shared types file for components
+  // const [epgViewState, setEpgViewState] = useState<{ displayIndex: number; currentEpgDate: number }>({
+  //   displayIndex: 0,
+  //   currentEpgDate: new Date(new Date().setHours(0, 0, 0, 0)).getTime()
+  // });
+
+  const [isStreamInfoVisible, setIsStreamInfoVisible] = useState(false);
+  const [isPlayerControlsVisible, setIsPlayerControlsVisible] = useState(true); // Default
+  const [activeTrackSelectionMenu, setActiveTrackSelectionMenu] = useState<
+    "audio" | "subtitle" | null
+  >(null);
 
   useEffect(() => {
     void fetchAndProcessServiceList();
@@ -37,7 +133,7 @@ export function Player() {
       // Create the video element if it doesn't exist
       const video = document.createElement("video");
       video.id = "dashjs-video-player";
-      video.muted = true;
+      video.muted = false;
       video.crossOrigin = "anonymous";
       videoElementRef.current = video;
     }
@@ -65,32 +161,6 @@ export function Player() {
       }
     };
   }, [setPlayerInstance]);
-
-  // --- Local UI State Management ---
-  const [isEpgVisible, setIsEpgVisible] = useState(false);
-  // TODO: Define EpgViewState type locally or import if moved to a shared types file for components
-  // const [epgViewState, setEpgViewState] = useState<{ displayIndex: number; currentEpgDate: number }>({
-  //   displayIndex: 0,
-  //   currentEpgDate: new Date(new Date().setHours(0, 0, 0, 0)).getTime()
-  // });
-
-  const [isSettingsVisible, setIsSettingsVisible] = useState(false);
-  const [activeSettingsPage, setActiveSettingsPage] = useState<string | null>(
-    null,
-  );
-
-  const [isStreamInfoVisible, setIsStreamInfoVisible] = useState(false);
-  const [isPlayerControlsVisible, setIsPlayerControlsVisible] = useState(true); // Default
-  const [activeTrackSelectionMenu, setActiveTrackSelectionMenu] = useState<
-    "audio" | "subtitle" | null
-  >(null);
-
-  // TODO: Add state for modals and notifications
-  // const [isModalOpen, setIsModalOpen] = useState(false);
-  // const [modalConfig, setModalConfig] = useState<any | null>(null); // Define proper type
-  // const [isPinModalOpen, setIsPinModalOpen] = useState(false);
-  // const [pinModalConfig, setPinModalConfig] = useState<any | null>(null); // Define proper type
-  // const [notification, setNotification] = useState<any | null>(null); // Define proper type
 
   // --- Derived State ---
   const currentChannel = channels.find((c) => c.id === selectedChannelId);
@@ -137,11 +207,9 @@ export function Player() {
 
   const handleOpenSettings = useCallback((event: ThreeEvent<MouseEvent>) => {
     setActiveSettingsPage("main");
-    setIsSettingsVisible(true);
   }, []); // Assuming setActiveSettingsPage and setIsSettingsVisible are stable (from useState)
 
   const handleCloseSettings = useCallback(() => {
-    setIsSettingsVisible(false);
     setActiveSettingsPage(null);
   }, []); // Assuming setIsSettingsVisible and setActiveSettingsPage are stable
 
@@ -195,34 +263,13 @@ export function Player() {
   // Display loading or error state
   if (isLoadingServiceList) {
     return (
-      <XR store={xrStore}>
-        <ambientLight intensity={Math.PI / 2} />
-        <Fullscreen backgroundColor="rgb(0,0,0)" backgroundOpacity={0.8}>
-          <Container alignSelf={"center"}>
-            <Text fontSize={30} color="white">
-              Loading service list...
-            </Text>
-          </Container>
-        </Fullscreen>
-      </XR>
-    );
-  }
-
-  if (globalError) {
-    return (
-      <XR store={xrStore}>
-        <ambientLight intensity={Math.PI / 2} />
-        <Fullscreen backgroundColor="rgb(0,0,0)" backgroundOpacity={0.8}>
-          <Container alignSelf={"center"} flexDirection="column" gap={10}>
-            <Text fontSize={30} color="red">
-              Error:
-            </Text>
-            <Text fontSize={20} color="white">
-              {globalError}
-            </Text>
-          </Container>
-        </Fullscreen>
-      </XR>
+      <Fullscreen backgroundColor="rgb(0,0,0)" backgroundOpacity={0.8}>
+        <Container alignSelf={"center"}>
+          <Text fontSize={30} color="white">
+            Loading service list...
+          </Text>
+        </Container>
+      </Fullscreen>
     );
   }
 
@@ -259,57 +306,41 @@ export function Player() {
           Enter VR
         </button>
       </div> */}
-      <XR store={xrStore}>
-        <ambientLight intensity={Math.PI / 2} />
-        <spotLight
-          position={[10, 10, 10]}
-          angle={0.15}
-          penumbra={1}
-          decay={0}
-          intensity={Math.PI}
-        />
-        <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
+      <Suspense>
+        <Fullscreen onPointerMove={handleMouseMove} flexDirection={"column"}>
+          {/* Background Video Player */}
+          {videoElementRef.current && (
+            <Video
+              src={videoElementRef.current}
+              width="100%"
+              height="100%"
+              positionType="absolute"
+              renderOrder={-1}
+            />
+          )}
 
-        <Suspense>
-          <Fullscreen
-            backgroundColor="rgb(0,0,0)"
-            backgroundOpacity={0.5}
-            flexDirection={"column"}
-          >
-            {/* Background Video Player */}
-            {/* The actual <video> element is now managed by videoElementRef and controlled by Dash.js */}
-            {/* The @react-three/uikit <Video> component will use this existing element */}
-            {videoElementRef.current && (
-              <Video
-                src={videoElementRef.current} // Use the Dash.js controlled video element
-                width="100%"
-                height="100%"
-                positionType="absolute" // To be in the background
-                zIndexOffset={-1} // Ensure it's behind the UI overlay
-              />
-            )}
-
+          <DefaultProperties backgroundOpacity={opacity} opacity={opacity}>
             {/* UI Overlay */}
             <Container
               positionType="absolute"
               inset={0}
-              flexDirection="row" // Main layout: Info/Buttons on left, Channel list on right
+              flexDirection="row"
               padding={20}
               gap={20}
             >
               {/* Left Panel: Info & Buttons */}
               <Container
-                width="60%" // Takes up 60% of the space
+                width="60%"
                 height="100%"
-                flexDirection="column"
-                justifyContent="space-between" // Pushes logo to top, info/buttons to bottom
-                backgroundColor="rgb(50,50,50)"
-                backgroundOpacity={0.3}
-                borderRadius={10}
+                flexDirection="row"
                 padding={15}
               >
                 {/* Footer: Channel Info & Buttons */}
-                <Container flexDirection="column" gap={10}>
+                <Container
+                  flexDirection="column"
+                  gap={10}
+                  alignSelf={"flex-end"}
+                >
                   <Text fontSize={20} color="white">
                     {currentChannel
                       ? `Playing: ${currentChannel.titles[0]?.text || currentChannel.id}`
@@ -325,51 +356,17 @@ export function Player() {
                       onClick={handleOpenEpg}
                       paddingX={15}
                       paddingY={8}
-                      borderRadius={5}
-                      backgroundColor="rgb(0,152,244)"
-                      backgroundOpacity={0.7}
-                      hover={{
-                        backgroundColor: "rgb(0,152,244)",
-                        backgroundOpacity: 1,
-                      }}
                       cursor="pointer"
                     >
                       <Text color="white">EPG</Text>
                     </Container>
                     <Container
-                      onClick={handleOpenSettings} // Pass directly
+                      onClick={handleOpenSettings}
                       paddingX={15}
                       paddingY={8}
-                      borderRadius={5}
-                      backgroundColor="rgb(100,100,100)"
-                      backgroundOpacity={0.7}
-                      hover={{
-                        backgroundColor: "rgb(120,120,120)",
-                        backgroundOpacity: 1,
-                      }}
                       cursor="pointer"
                     >
                       <Text color="white">Settings</Text>
-                    </Container>
-                    {/* Example for toggling player controls - can be a button or an auto-hide mechanism */}
-                    <Container
-                      onClick={handleTogglePlayerControls}
-                      paddingX={15}
-                      paddingY={8}
-                      borderRadius={5}
-                      backgroundColor="rgb(150,150,150)"
-                      backgroundOpacity={0.7}
-                      hover={{
-                        backgroundColor: "rgb(170,170,170)",
-                        backgroundOpacity: 1,
-                      }}
-                      cursor="pointer"
-                    >
-                      <Text onClick={handleTogglePlayerControls} color="white">
-                        {isPlayerControlsVisible
-                          ? "Hide Controls"
-                          : "Show Controls"}
-                      </Text>
                     </Container>
                   </Container>
                 </Container>
@@ -377,6 +374,7 @@ export function Player() {
 
               {/* Right Panel: Channel List */}
               <ChannelListView
+                opacity={opacity}
                 channels={channels}
                 selectedChannelId={selectedChannelId}
                 isLoadingServiceList={isLoadingServiceList}
@@ -384,24 +382,72 @@ export function Player() {
               />
             </Container>
 
-            {/* Settings Modal Overlay */}
-            <SettingsView
-              isVisible={isSettingsVisible}
-              activePage={activeSettingsPage}
-              onClose={handleCloseSettings}
-              onNavigate={setActiveSettingsPage}
-            />
-
             {/* Player Controls Overlay */}
             <PlayerControls
-              isVisible={isPlayerControlsVisible}
+              opacity={opacity}
               onOpenAudioTrackMenu={handleOpenAudioTrackMenu}
               onOpenSubtitleTrackMenu={handleOpenSubtitleTrackMenu}
               onToggleFullscreen={handleToggleFullscreen}
             />
-          </Fullscreen>
-        </Suspense>
-      </XR>
+          </DefaultProperties>
+
+          {/* Settings Modal Overlay */}
+          <SettingsView
+            activePage={activeSettingsPage}
+            onClose={handleCloseSettings}
+            onNavigate={setActiveSettingsPage}
+          />
+
+          {/* Error Modal Overlay */}
+          {globalError && (
+            <Container
+              positionType="absolute"
+              inset={0}
+              alignItems="center"
+              justifyContent="center"
+              backgroundColor="rgb(0,0,0)"
+              backgroundOpacity={0.8}
+              zIndexOffset={10}
+            >
+              <Container
+                alignSelf="center"
+                flexDirection="column"
+                gap={20}
+                padding={30}
+                borderRadius={10}
+                backgroundColor="rgb(80,80,80)"
+                width={500}
+              >
+                <Text fontSize={30} color="red" textAlign="center">
+                  Error
+                </Text>
+                <Text fontSize={18} color="white" textAlign="center">
+                  {" "}
+                  {/* Allow text wrapping */}
+                  {globalError}
+                </Text>
+                <Container
+                  onClick={() => {
+                    clearGlobalError();
+                  }}
+                  paddingX={20}
+                  paddingY={10}
+                  borderRadius={5}
+                  backgroundColor="rgb(0,122,204)"
+                  hover={{ backgroundColor: "rgb(0,152,244)" }}
+                  cursor="pointer"
+                  alignSelf="center"
+                  marginTop={20}
+                >
+                  <Text color="white" fontSize={18}>
+                    Dismiss
+                  </Text>
+                </Container>
+              </Container>
+            </Container>
+          )}
+        </Fullscreen>
+      </Suspense>
     </>
   );
 }

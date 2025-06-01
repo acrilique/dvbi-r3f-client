@@ -18,6 +18,8 @@ export default [
       js.configs.recommended,
       tseslint.configs.recommendedTypeChecked,
       eslintReact.configs["recommended-typescript"],
+      reactCompiler.configs.recommended,
+      reactHooks.configs.recommended,
       eslintPluginPrettierRecommended,
     ],
     languageOptions: {
@@ -36,6 +38,4 @@ export default [
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     },
   }),
-  reactCompiler.configs.recommended,
-  reactHooks.configs.recommended,
 ];

@@ -1,18 +1,33 @@
 import React from "react";
 import { Container, Text, Image } from "@react-three/uikit";
 import { ChannelRepresentation } from "../store/types";
+import { Signal, computed } from "@preact/signals-react";
 
 interface ChannelListItemProps {
+  opacity: Signal<number>;
   channel: ChannelRepresentation;
   isSelected: boolean;
   onSelectChannel: (channelId: string) => void;
 }
 
 const ChannelListItemComponent: React.FC<ChannelListItemProps> = ({
+  opacity,
   channel,
   isSelected,
   onSelectChannel,
 }) => {
+  const outerContainerOpacity = computed(() => {
+    return opacity.value * (isSelected ? 0.7 : 0.5);
+  });
+
+  const hoverOuterContainerOpacity = computed(() => {
+    return opacity.value * (isSelected ? 0.9 : 0.7);
+  });
+
+  const innerContainerOpacity = computed(() => {
+    return opacity.value * 0.5;
+  });
+
   return (
     <Container
       key={channel.id} // key is actually used by the parent map, but good to have it conceptually here
@@ -21,10 +36,10 @@ const ChannelListItemComponent: React.FC<ChannelListItemProps> = ({
       padding={10}
       borderRadius={5}
       backgroundColor={isSelected ? "rgb(0,152,244)" : "rgb(80,80,80)"}
-      backgroundOpacity={isSelected ? 0.7 : 0.5}
+      backgroundOpacity={outerContainerOpacity}
       hover={{
         backgroundColor: isSelected ? "rgb(0,152,244)" : "rgb(100,100,100)",
-        backgroundOpacity: isSelected ? 0.9 : 0.7,
+        backgroundOpacity: hoverOuterContainerOpacity,
       }}
       cursor="pointer"
       onClick={() => onSelectChannel(channel.id)}
@@ -43,7 +58,7 @@ const ChannelListItemComponent: React.FC<ChannelListItemProps> = ({
           width={30}
           height={30}
           backgroundColor="rgb(120,120,120)"
-          backgroundOpacity={0.5}
+          backgroundOpacity={innerContainerOpacity}
           borderRadius={5}
         />
       )}

@@ -12,10 +12,11 @@ import {
   AudioWaveform,
 } from "@react-three/uikit-lucide";
 import { useAppStore } from "../store/store";
-import type { AppState } from "../store/types"; // For selecting parts of state & DashPlayerInstance
+import type { AppState } from "../store/types";
+import { Signal, computed } from "@preact/signals-react";
 
 interface PlayerControlsProps {
-  isVisible: boolean;
+  opacity: Signal<number>;
   onOpenAudioTrackMenu: () => void;
   onOpenSubtitleTrackMenu: () => void;
   onToggleFullscreen: () => void;
@@ -23,7 +24,7 @@ interface PlayerControlsProps {
 }
 
 const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
-  isVisible,
+  opacity,
   onOpenAudioTrackMenu,
   onOpenSubtitleTrackMenu,
   onToggleFullscreen,
@@ -38,16 +39,36 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
   // const isSeeking = useAppStore((state: AppState) => state.isSeeking); // For seek bar visual feedback
 
   // Actions from Zustand
+  const setGlobalError = useAppStore((state) => state.setGlobalError);
   const setPlayerVolume = useAppStore((state) => state.setPlayerVolume);
   const seekPlayerTo = useAppStore((state) => state.seekPlayerTo);
 
+  const outerContainerOpacity = computed(() => {
+    return opacity.value * 0.6;
+  });
+
+  const innerContainersOpacity = computed(() => {
+    return opacity.value * 0.2;
+  });
+
+  const iconsOpacity = computed(() => {
+    return opacity.value * 1.0;
+  });
+
   const handlePlayPause = useCallback(() => {
-    if (playerInstance) {
-      if (isPlaying) {
-        playerInstance.pause();
-      } else {
-        playerInstance.play();
+    try {
+      if (playerInstance) {
+        if (isPlaying) {
+          playerInstance.pause();
+        } else {
+          playerInstance.play();
+        }
       }
+    } catch (error) {
+      console.error("Error toggling play/pause from component:", error);
+      setGlobalError(
+        "Failed to toggle play/pause. Content might be unavailable.",
+      );
     }
   }, [isPlaying, playerInstance]);
 
@@ -75,10 +96,6 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
   //   seekPlayerTo(time);
   // }, [seekPlayerTo]);
 
-  if (!isVisible) {
-    return null;
-  }
-
   return (
     <Container
       positionType="absolute"
@@ -90,7 +107,7 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
       justifyContent="space-around"
       paddingX={20}
       backgroundColor="rgb(0,0,0)"
-      backgroundOpacity={0.6}
+      backgroundOpacity={outerContainerOpacity}
       borderRadius={10}
       gap={10}
       zIndexOffset={10} // Ensure it's above the video
@@ -101,13 +118,13 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
         padding={10}
         borderRadius={5}
         backgroundColor="rgb(255,255,255)"
-        backgroundOpacity={0.2}
+        backgroundOpacity={innerContainersOpacity}
         hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
       >
         {isPlaying ? (
-          <Pause color="white" width={24} height={24} />
+          <Pause opacity={iconsOpacity} color="white" width={24} height={24} />
         ) : (
-          <Play color="white" width={24} height={24} />
+          <Play opacity={iconsOpacity} color="white" width={24} height={24} />
         )}
       </Button>
 
@@ -120,7 +137,7 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
       </Container>
 
       {/* TODO: Seek Bar */}
-      <Container
+      {/* <Container
         flexGrow={1}
         height={10}
         backgroundColor="rgb(255,255,255)"
@@ -128,8 +145,7 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
         borderRadius={5}
         marginX={10}
       >
-        {/* Seek bar progress indicator would go here */}
-      </Container>
+      </Container> */}
 
       {/* Volume Control */}
       <Button
@@ -137,11 +153,12 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
         padding={10}
         borderRadius={5}
         backgroundColor="rgb(255,255,255)"
-        backgroundOpacity={0.2}
+        backgroundOpacity={innerContainersOpacity}
         hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
       >
         {isMuted ? (
           <VolumeX
+            opacity={iconsOpacity}
             onClick={handleMuteToggle}
             color="white"
             width={24}
@@ -149,6 +166,7 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
           />
         ) : (
           <Volume2
+            opacity={iconsOpacity}
             onClick={handleMuteToggle}
             color="white"
             width={24}
@@ -164,10 +182,15 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
         padding={10}
         borderRadius={5}
         backgroundColor="rgb(255,255,255)"
-        backgroundOpacity={0.2}
+        backgroundOpacity={innerContainersOpacity}
         hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
       >
-        <AudioWaveform color="white" width={24} height={24} />
+        <AudioWaveform
+          opacity={iconsOpacity}
+          color="white"
+          width={24}
+          height={24}
+        />
       </Button>
 
       {/* Subtitle Track Selection */}
@@ -176,10 +199,10 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
         padding={10}
         borderRadius={5}
         backgroundColor="rgb(255,255,255)"
-        backgroundOpacity={0.2}
+        backgroundOpacity={innerContainersOpacity}
         hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
       >
-        <Captions color="white" width={24} height={24} />
+        <Captions opacity={iconsOpacity} color="white" width={24} height={24} />
       </Button>
 
       {/* Fullscreen Toggle */}
@@ -188,11 +211,11 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
         padding={10}
         borderRadius={5}
         backgroundColor="rgb(255,255,255)"
-        backgroundOpacity={0.2}
+        backgroundOpacity={innerContainersOpacity}
         hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
       >
         {/* Assuming a state 'isFullscreen' would be passed or derived to toggle icon */}
-        <Maximize color="white" width={24} height={24} />
+        <Maximize opacity={iconsOpacity} color="white" width={24} height={24} />
       </Button>
     </Container>
   );
