@@ -21,13 +21,13 @@
   <ContentGuideSource CGSID="cgid-1">
     <ProviderName>DVB-I Reference Application</ProviderName>
     <ScheduleInfoEndpoint contentType="application/xml">
-      <dvbi-types:URI>INSTALL~~LOCATION/backend/schedule.php</dvbi-types:URI>
+      <!-- <dvbi-types:URI>INSTALL~~LOCATION/backend/schedule.php</dvbi-types:URI> -->
     </ScheduleInfoEndpoint>
     <ProgramInfoEndpoint contentType="application/xml">
-      <dvbi-types:URI>INSTALL~~LOCATION/backend/program_information.php</dvbi-types:URI>
+      <!-- <dvbi-types:URI>INSTALL~~LOCATION/backend/program_information.php</dvbi-types:URI> -->
     </ProgramInfoEndpoint>
     <MoreEpisodesEndpoint contentType="application/xml">
-      <dvbi-types:URI>INSTALL~~LOCATION/backend/more_episodes.php</dvbi-types:URI>
+      <!-- <dvbi-types:URI>INSTALL~~LOCATION/backend/more_episodes.php</dvbi-types:URI> -->
     </MoreEpisodesEndpoint>
   </ContentGuideSource>
   <Service version="1">
