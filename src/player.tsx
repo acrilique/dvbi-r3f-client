@@ -19,7 +19,7 @@ import { SettingsView } from "./components/SettingsView";
 import { PlayerControls } from "./components/PlayerControls";
 import { ChannelListView } from "./components/ChannelListView";
 import { ThreeEvent, useFrame } from "@react-three/fiber";
-import { Signal } from "@preact/signals-react";
+import { computed, Signal } from "@preact/signals-react";
 import { MathUtils } from "three";
 
 function useDampedSignal(initialValue: number, dampingFactor = 7) {
@@ -88,6 +88,10 @@ export function Player() {
 
   // Non-modal ui visibility
   const [opacity, setOpacity] = useDampedSignal(0);
+
+  const footerBackgroundOpacity = computed(() => {
+    return opacity.value * 0.7;
+  });
 
   const handleMouseMove = useCallback(() => {
     setOpacity(1);
@@ -319,7 +323,7 @@ export function Player() {
             />
           )}
 
-          <DefaultProperties backgroundOpacity={opacity} opacity={opacity}>
+          <DefaultProperties opacity={opacity}>
             {/* UI Overlay */}
             <Container
               positionType="absolute"
@@ -340,6 +344,10 @@ export function Player() {
                   flexDirection="column"
                   gap={10}
                   alignSelf={"flex-end"}
+                  backgroundColor="rgb(0,0,0)"
+                  backgroundOpacity={footerBackgroundOpacity}
+                  padding={20}
+                  borderRadius={10}
                 >
                   <Text fontSize={20} color="white">
                     {currentChannel
