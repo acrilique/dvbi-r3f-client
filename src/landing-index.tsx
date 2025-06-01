@@ -1,9 +1,9 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { Landing } from './landing.js'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { Landing } from "./landing.js";
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Landing />
   </StrictMode>,
-)
+);

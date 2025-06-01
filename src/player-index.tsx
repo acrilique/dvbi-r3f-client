@@ -1,9 +1,12 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { Player } from './player.js'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { Player } from "./player.js";
+import { Canvas } from "@react-three/fiber";
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Player />
+    <Canvas>
+      <Player />
+    </Canvas>
   </StrictMode>,
-)
+);

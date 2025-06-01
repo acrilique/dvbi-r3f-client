@@ -22,7 +22,7 @@ export interface ProgramRepresentation {
   id: string;
   titles: LocalizedString[];
   startTime: number; // Unix timestamp (ms)
-  endTime: number;   // Unix timestamp (ms)
+  endTime: number; // Unix timestamp (ms)
   description?: string;
   parentalRatings?: ParentalRating[];
   cpsIndex?: string;
@@ -69,8 +69,14 @@ export interface AccessibilityAttributes {
   subtitles?: AccessibilitySubtitleAttributes[];
   audio_descriptions?: AccessibilityAudioDescription[];
   signings?: AccessibilitySigning[];
-  dialogue_enhancements?: { audio_attributes?: AccessibilityAudioAttributes; app?: string }[];
-  spoken_subtitles?: { audio_attributes?: AccessibilityAudioAttributes; app?: string }[];
+  dialogue_enhancements?: {
+    audio_attributes?: AccessibilityAudioAttributes;
+    app?: string;
+  }[];
+  spoken_subtitles?: {
+    audio_attributes?: AccessibilityAudioAttributes;
+    app?: string;
+  }[];
   magnification_ui?: AccessibilityAppAndPurpose[];
   high_contrast_ui?: AccessibilityAppAndPurpose[];
   screen_reader_ui?: AccessibilityAppAndPurpose[];
@@ -91,7 +97,7 @@ export interface MediaPresentationApp {
 
 export interface CmcdInitInfo {
   enabled: boolean;
-  mode?: 'header' | 'query';
+  mode?: "header" | "query";
   enabledKeys?: string[];
   cid?: string;
   version?: number;
@@ -151,12 +157,6 @@ export interface ChannelRepresentation {
   schedulePrograms?: ProgramRepresentation[]; // EPG data for this channel
 }
 
-// --- EPG View State ---
-export interface EpgViewState {
-  displayIndex: number; // For paginating channels in EPG view
-  currentEpgDate: number; // Unix timestamp (ms) for start of day
-}
-
 // --- Service List Structure (Reflecting parsed data from parseServiceList) ---
 export interface ContentGuideSourceInfo {
   id: string;
@@ -196,7 +196,6 @@ export interface ParsedServiceList {
   lcnTables?: LcnTableInfo[];
 }
 
-
 // --- Settings ---
 export interface LanguageSettings {
   audioLanguage: string;
@@ -218,6 +217,11 @@ export interface ParentalSettings {
   parentalPin: string | null;
 }
 
+export interface AvailableServiceListEntry {
+  name: string; // User-friendly name, e.g., "Default Example List"
+  identifier: string; // The value to pass to fetchAndProcessServiceList, e.g., "example.xml" or a full URL
+}
+
 // --- Player ---
 export type DashPlayerInstance = MediaPlayerClass | null;
 
@@ -226,32 +230,29 @@ export interface AppState {
   // Processed Data
   channels: ChannelRepresentation[];
   selectedChannelId: string | null;
-  serviceListInfo: { // Info about the loaded service list itself
+  serviceListInfo: {
+    // Info about the loaded service list itself
     nameFromRegistry?: string; // If loaded via a registry that provides a name
     logoFromRegistryUrl?: string; // If loaded via a registry
-    sourceUrl: string; // The URL from which this list was loaded
+    sourceUrl: string; // The fully resolved URL that was fetched
+    identifier: string; // The pathOrUrl (e.g., "example.xml" or "http://...") used to initiate the fetch
   } | null;
+  availableServiceLists: AvailableServiceListEntry[];
 
-  epgViewState: EpgViewState;
+  // epgViewState: EpgViewState; // Removed: Will be local to EPG component
   playerInstance: DashPlayerInstance;
 
   languageSettings: LanguageSettings;
   lowLatencySettings: LowLatencySettings;
   parentalSettings: ParentalSettings;
 
-  // UI Interaction State
-  isEpgVisible: boolean;
-  isSettingsVisible: boolean;
-  activeSettingsPage: string | null;
-  isStreamInfoVisible: boolean;
-  isPlayerControlsVisible: boolean;
-  activeTrackSelectionMenu: 'audio' | 'subtitle' | null;
-
-  isModalOpen: boolean;
-  modalConfig: { message: string; confirmText?: string; onConfirm?: () => void; cancelText?: string; onCancel?: () => void; } | null;
-  isPinModalOpen: boolean;
-  pinModalConfig: { message: string; onSuccess: (pin: string) => void; onFailure?: () => void; } | null;
-  notification: { message: string; type: 'error' | 'info' | 'success' | 'warning' | 'noservice'; duration?: number; isHtml?: boolean; } | null;
+  // Player State
+  isPlaying: boolean;
+  volume: number; // 0.0 to 1.0
+  isMuted: boolean;
+  duration: number; // in seconds
+  currentTime: number; // in seconds
+  isSeeking: boolean;
 
   // Loading/Error States
   isLoadingServiceList: boolean;

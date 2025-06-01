@@ -5,7 +5,6 @@ import {
   AccessibilityAppAndPurpose,
   AccessibilitySigning,
   AccessibilitySubtitleAttributes,
-  AvailabilityPeriod,
   ChannelRepresentation,
   CmcdInitInfo,
   ContentGuideSourceInfo,
@@ -18,12 +17,9 @@ import {
   ProminenceInfo,
   RegionInfo,
   ServiceInstanceRepresentation,
-} from '../store/types';
+} from "../store/types";
 
-// Namespaces (from namespaces.js, assuming they are available or will be defined)
-const DVBi_ns = "urn:dvb:metadata:servicediscovery:2023"; // Or the version used in XML
-const DVBi_TYPES_ns = "urn:dvb:metadata:types:2023";
-const TVA_ns = "urn:tva:metadata:2023"; // Or the version used in XML
+// Namespaces
 const XML_MIME = "application/xml"; // Or "text/xml" depending on usage
 
 // Constants from dvbi-common.js
@@ -45,16 +41,23 @@ interface CSMapEntry {
   definition: string;
 }
 
-function datatypeIs(variable: any): string {
+function datatypeIs(variable: unknown): string {
   if (Array.isArray(variable)) return "array";
   return typeof variable;
 }
 
-function mapValues(vals: string | string[] | null | undefined, map: CSMapEntry[]): string | string[] | null {
+function mapValues(
+  vals: string | string[] | null | undefined,
+  map: CSMapEntry[],
+): string | string[] | null {
   function mapValue(val: string): string {
     const found = map.find((e) => e.value === val);
     // TODO: Integrate i18n for definitions starting with "~"
-    return found ? (found.definition.startsWith("~") ? found.definition.substring(1) : found.definition) : "!err!";
+    return found
+      ? found.definition.startsWith("~")
+        ? found.definition.substring(1)
+        : found.definition
+      : "!err!";
   }
   const typ = datatypeIs(vals);
   if (typ === "array") {
@@ -75,11 +78,14 @@ const TVASubtitleCarriageCSmap: CSMapEntry[] = [
   { value: `${TVASubtitleCarriageCSuri}:5`, definition: OPEN_SUBITLES_STRING },
   { value: `${TVASubtitleCarriageCSuri}:99`, definition: "other" },
 ];
-function SubtitleCarriageCS(vals: string | string[] | null | undefined): string | string[] | null {
+function SubtitleCarriageCS(
+  vals: string | string[] | null | undefined,
+): string | string[] | null {
   return mapValues(vals, TVASubtitleCarriageCSmap);
 }
 
-const TVASubtitleCodingCSuri = "urn:tva:metadata:cs:SubtitleCodingFormatCS:2023";
+const TVASubtitleCodingCSuri =
+  "urn:tva:metadata:cs:SubtitleCodingFormatCS:2023";
 const TVASubtitleCodingCSmap: CSMapEntry[] = [
   { value: `${TVASubtitleCodingCSuri}:1`, definition: "WST" },
   { value: `${TVASubtitleCodingCSuri}:2.1.2`, definition: "DVB bmp 1.2.1" },
@@ -109,11 +115,14 @@ const TVASubtitleCodingCSmap: CSMapEntry[] = [
   { value: `${TVASubtitleCodingCSuri}:9`, definition: "open" },
   { value: `${TVASubtitleCodingCSuri}:99`, definition: "other" },
 ];
-function SubtitleCodingCS(vals: string | string[] | null | undefined): string | string[] | null {
+function SubtitleCodingCS(
+  vals: string | string[] | null | undefined,
+): string | string[] | null {
   return mapValues(vals, TVASubtitleCodingCSmap);
 }
 
-const MPEG7AudioPresentationCSuri = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2007";
+const MPEG7AudioPresentationCSuri =
+  "urn:mpeg:mpeg7:cs:AudioPresentationCS:2007";
 const MPEG7AudioPresentationCSmap: CSMapEntry[] = [
   { value: `${MPEG7AudioPresentationCSuri}:1`, definition: "none" },
   { value: `${MPEG7AudioPresentationCSuri}:2`, definition: "mono" },
@@ -122,7 +131,9 @@ const MPEG7AudioPresentationCSmap: CSMapEntry[] = [
   { value: `${MPEG7AudioPresentationCSuri}:5`, definition: "home" },
   { value: `${MPEG7AudioPresentationCSuri}:6`, definition: "movie" },
 ];
-function AudioPresentationCS(vals: string | string[] | null | undefined): string | string[] | null {
+function AudioPresentationCS(
+  vals: string | string[] | null | undefined,
+): string | string[] | null {
   return mapValues(vals, MPEG7AudioPresentationCSmap);
 }
 
@@ -242,8 +253,12 @@ const DVBAudioCodecCS2020map: CSMapEntry[] = [
   { value: `${DVBAudioCodecCS2020uri}:6.1.2`, definition: "MPEG-H 3D LC-2" },
   { value: `${DVBAudioCodecCS2020uri}:6.1.3`, definition: "MPEG-H 3D LC-3" },
 ];
-const AllAudioTerms: CSMapEntry[] = MPEG7AudioCodingCSmap.concat(DVBAudioCodecCS2020map).concat(DVBAudioCodecCS2007map);
-function AudioCodingCS(vals: string | string[] | null | undefined): string | string[] | null {
+const AllAudioTerms: CSMapEntry[] = MPEG7AudioCodingCSmap.concat(
+  DVBAudioCodecCS2020map,
+).concat(DVBAudioCodecCS2007map);
+function AudioCodingCS(
+  vals: string | string[] | null | undefined,
+): string | string[] | null {
   return mapValues(vals, AllAudioTerms);
 }
 
@@ -368,8 +383,14 @@ const DVBVideoCodecCSmap: CSMapEntry[] = [
   { value: `${DVBVideoCodecCSuri}:1.8.13`, definition: "H.264-scal-high-L4.1" },
   { value: `${DVBVideoCodecCSuri}:1.8.14`, definition: "H.264-scal-high-L4.2" },
   { value: `${DVBVideoCodecCSuri}:1.9.9`, definition: "H.264-stereo-high-L3" },
-  { value: `${DVBVideoCodecCSuri}:1.9.10`, definition: "H.264-stereo-high-L3.1" },
-  { value: `${DVBVideoCodecCSuri}:1.9.11`, definition: "H.264-stereo-high-L3.2" },
+  {
+    value: `${DVBVideoCodecCSuri}:1.9.10`,
+    definition: "H.264-stereo-high-L3.1",
+  },
+  {
+    value: `${DVBVideoCodecCSuri}:1.9.11`,
+    definition: "H.264-stereo-high-L3.2",
+  },
   { value: `${DVBVideoCodecCSuri}:1.9.12`, definition: "H.264-stereo-high-L4" },
   { value: `${DVBVideoCodecCSuri}:2.1.1`, definition: "VC1-simp-LL" },
   { value: `${DVBVideoCodecCSuri}:2.1.2`, definition: "VC1-simp-ML" },
@@ -436,19 +457,38 @@ const DVBVideoCodecCSmap: CSMapEntry[] = [
   { value: `${DVBVideoCodecCSuri}:6.1.9`, definition: "VVC-main10-L6.1" },
   { value: `${DVBVideoCodecCSuri}:6.1.10`, definition: "VVC-main10-L6.2" },
 ];
-function VideoCodecCS(vals: string | string[] | null | undefined): string | string[] | null {
+function VideoCodecCS(
+  vals: string | string[] | null | undefined,
+): string | string[] | null {
   return mapValues(vals, DVBVideoCodecCSmap);
 }
 
 const TVASubtitlePurposeCSuri = "urn:tva:metadata:cs:SubtitlePurposeCS:2023";
 const TVASubtitlePurposeCSmap: CSMapEntry[] = [
-  { value: `${TVASubtitlePurposeCSuri}:1`, definition: "~subtitle_purpose_translation" },
-  { value: `${TVASubtitlePurposeCSuri}:2`, definition: "~subtitle_purpose_hard_of_hearing" },
-  { value: `${TVASubtitlePurposeCSuri}:3`, definition: "~subtitle_purpose_audio_description" },
-  { value: `${TVASubtitlePurposeCSuri}:4`, definition: "~subtitle_purpose_commentary" },
-  { value: `${TVASubtitlePurposeCSuri}:5`, definition: "~subtitle_purpose_forced_narrative" },
+  {
+    value: `${TVASubtitlePurposeCSuri}:1`,
+    definition: "~subtitle_purpose_translation",
+  },
+  {
+    value: `${TVASubtitlePurposeCSuri}:2`,
+    definition: "~subtitle_purpose_hard_of_hearing",
+  },
+  {
+    value: `${TVASubtitlePurposeCSuri}:3`,
+    definition: "~subtitle_purpose_audio_description",
+  },
+  {
+    value: `${TVASubtitlePurposeCSuri}:4`,
+    definition: "~subtitle_purpose_commentary",
+  },
+  {
+    value: `${TVASubtitlePurposeCSuri}:5`,
+    definition: "~subtitle_purpose_forced_narrative",
+  },
 ];
-function SubtitlePurposeCS(vals: string | string[] | null | undefined): string | string[] | null {
+function SubtitlePurposeCS(
+  vals: string | string[] | null | undefined,
+): string | string[] | null {
   return mapValues(vals, TVASubtitlePurposeCSmap);
 }
 
@@ -467,7 +507,9 @@ const AppStandards_map: CSMapEntry[] = [
   { value: `${CEAuri}:cta5000e:2022`, definition: "CTA-5000-E" },
   { value: `${CEAuri}:cta5000f:2023`, definition: "CTA-5000-F" },
 ];
-function StandardVersion(vals: string | string[] | null | undefined): string | string[] | null {
+function StandardVersion(
+  vals: string | string[] | null | undefined,
+): string | string[] | null {
   return mapValues(vals, AppStandards_map);
 }
 
@@ -479,59 +521,83 @@ const OptionalFeatures_map: CSMapEntry[] = [
   { value: `${HbbTVOption_uri}:graphics_02`, definition: "+GRAHICS_02" },
   { value: `${HbbTVOption_uri}:aria`, definition: "+ARIA" },
 ];
-function OptionalFeature(vals: string | string[] | null | undefined): string | string[] | null {
+function OptionalFeature(
+  vals: string | string[] | null | undefined,
+): string | string[] | null {
   return mapValues(vals, OptionalFeatures_map);
 }
 
-const AccessibilityPurposeCSuri = "urn:tva:metadata:cs:AccessibilityPurposeCS:2023";
+const AccessibilityPurposeCSuri =
+  "urn:tva:metadata:cs:AccessibilityPurposeCS:2023";
 const AccessibilityPurposeCSmap: CSMapEntry[] = [
-  { value: `${AccessibilityPurposeCSuri}:1.1`, definition: "~textMagnification" },
+  {
+    value: `${AccessibilityPurposeCSuri}:1.1`,
+    definition: "~textMagnification",
+  },
   { value: `${AccessibilityPurposeCSuri}:1.2`, definition: "~magnifierGlass" },
   { value: `${AccessibilityPurposeCSuri}:1.3`, definition: "~screenZoom" },
   { value: `${AccessibilityPurposeCSuri}:1.4`, definition: "~largeLayout" },
   { value: `${AccessibilityPurposeCSuri}:2.1`, definition: "~monochrome" },
   { value: `${AccessibilityPurposeCSuri}:3.1`, definition: "~maleVoice" },
   { value: `${AccessibilityPurposeCSuri}:3.2`, definition: "~femaleVoice" },
-  { value: `${AccessibilityPurposeCSuri}:3.3`, definition: "~configurableVerbosity" },
+  {
+    value: `${AccessibilityPurposeCSuri}:3.3`,
+    definition: "~configurableVerbosity",
+  },
   { value: `${AccessibilityPurposeCSuri}:3.4`, definition: "~speed" },
   { value: `${AccessibilityPurposeCSuri}:4.1`, definition: "~audio" },
   { value: `${AccessibilityPurposeCSuri}:4.2`, definition: "~visual" },
   { value: `${AccessibilityPurposeCSuri}:4.3`, definition: "~haptic" },
 ];
-function AccessibilityPurposeCS(vals: string | string[] | null | undefined): string | string[] | null {
+function AccessibilityPurposeCS(
+  vals: string | string[] | null | undefined,
+): string | string[] | null {
   return mapValues(vals, AccessibilityPurposeCSmap);
 }
 
-
 // --- XML Parsing Helper Functions (to be implemented) ---
 
-function getChildElements(parent: Element, tagName: string, namespace?: string): Element[] {
-  const elements: Element[] = [];
-  if (parent && parent.childNodes) {
-    for (let i = 0; i < parent.childNodes.length; i++) {
-      const node = parent.childNodes[i];
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as Element;
-        const localNameMatch = element.localName === tagName;
-        const namespaceMatch = namespace ? element.namespaceURI === namespace : true;
-        if (localNameMatch && namespaceMatch) {
-          elements.push(element);
-        }
+function getChildElements(
+  parent: Element,
+  tagName: string,
+  namespaceURI?: string | null,
+): Element[] {
+  const matchingElements: Element[] = [];
+  if (parent && parent.children) {
+    for (let i = 0; i < parent.children.length; i++) {
+      const childElement = parent.children[i];
+      const localNameMatch = childElement.localName === tagName;
+      // If namespaceURI is provided (not null/undefined), then match it. Otherwise (if undefined/null), it's a wildcard match for namespace.
+      const namespaceMatch =
+        namespaceURI === undefined || namespaceURI === null
+          ? true
+          : childElement.namespaceURI === namespaceURI;
+
+      if (localNameMatch && namespaceMatch) {
+        matchingElements.push(childElement);
       }
     }
   }
-  return elements;
+  return matchingElements;
 }
 
-function getChildElement(parent: Element, tagName:string, namespace?: string): Element | null {
-    const children = getChildElements(parent, tagName, namespace);
-    return children.length > 0 ? children[0] : null;
+function getChildElement(
+  parent: Element,
+  tagName: string,
+  namespaceURI?: string | null,
+): Element | null {
+  const children = getChildElements(parent, tagName, namespaceURI);
+  return children.length > 0 ? children[0] : null;
 }
 
-
-function getChildValue(element: Element | null, childElementName: string, namespace?: string, attributeName?: string): string | null {
+function getChildValue(
+  element: Element | null,
+  childElementName: string,
+  namespaceURI?: string | null,
+  attributeName?: string,
+): string | null {
   if (!element) return null;
-  const childElement = getChildElement(element, childElementName, namespace);
+  const childElement = getChildElement(element, childElementName, namespaceURI);
   if (childElement) {
     if (attributeName) {
       return childElement.getAttribute(attributeName);
@@ -541,21 +607,30 @@ function getChildValue(element: Element | null, childElementName: string, namesp
   return null;
 }
 
-function getChildValues(element: Element | null, childElementName: string, namespace?: string, attributeName?: string): string[] {
+function getChildValues(
+  element: Element | null,
+  childElementName: string,
+  namespaceURI?: string | null,
+  attributeName?: string,
+): string[] {
   if (!element) return [];
-  const children = getChildElements(element, childElementName, namespace);
-  return children.map(child => {
-    if (attributeName) {
-      return child.getAttribute(attributeName);
-    }
-    return child.textContent;
-  }).filter(value => value !== null) as string[];
+  const children = getChildElements(element, childElementName, namespaceURI);
+  return children
+    .map((child) => {
+      if (attributeName) {
+        return child.getAttribute(attributeName);
+      }
+      return child.textContent;
+    })
+    .filter((value) => value !== null);
 }
-
 
 function elementLanguage(element: Element | null): string {
   if (element == null) return "default";
-  const lang = element.getAttributeNS("http://www.w3.org/XML/1998/namespace", "lang");
+  const lang = element.getAttributeNS(
+    "http://www.w3.org/XML/1998/namespace",
+    "lang",
+  );
   if (lang) return lang;
   else return elementLanguage(element.parentElement);
 }
@@ -569,32 +644,54 @@ function getText(element: Element | null): LocalizedString | null {
 }
 
 function getTexts(elements: Element[]): LocalizedString[] {
-    return elements.map(getText).filter(lt => lt !== null) as LocalizedString[];
+  return elements.map(getText).filter((lt) => lt !== null);
 }
-
 
 function getMedia(element: Element | null): MediaRepresentation | null {
   if (!element) return null;
-  const mediaUriEl = getChildElement(element, "MediaUri", TVA_ns) || getChildElement(element, "MediaUri");
+  // Use undefined for namespace to mimic wildcard matching for TVA elements
+  const mediaUriEl = getChildElement(element, "MediaUri", undefined);
   if (mediaUriEl && mediaUriEl.textContent) {
     return { mediaUri: mediaUriEl.textContent.trim() };
   }
   return null;
 }
 
-function parseContentGuideSource(src: Element | null): ContentGuideSourceInfo | null {
+function parseContentGuideSource(
+  src: Element | null,
+  dvbiNs: string | undefined,
+  dvbiTypesNs: string | undefined,
+): ContentGuideSourceInfo | null {
   if (!src) return null;
   const cgsid = src.getAttribute("CGSID");
   if (!cgsid) return null;
 
-  const scheduleInfoEndpointEl = getChildElement(src, "ScheduleInfoEndpoint", DVBi_ns);
-  const contentGuideURI = scheduleInfoEndpointEl ? getChildValue(scheduleInfoEndpointEl, "URI", DVBi_TYPES_ns) : null;
+  const scheduleInfoEndpointEl = getChildElement(
+    src,
+    "ScheduleInfoEndpoint",
+    dvbiNs,
+  );
+  const contentGuideURI = scheduleInfoEndpointEl
+    ? getChildValue(scheduleInfoEndpointEl, "URI", dvbiTypesNs)
+    : null;
 
-  const moreEpisodesEndpointEl = getChildElement(src, "MoreEpisodesEndpoint", DVBi_ns);
-  const moreEpisodesURI = moreEpisodesEndpointEl ? getChildValue(moreEpisodesEndpointEl, "URI", DVBi_TYPES_ns) : null;
+  const moreEpisodesEndpointEl = getChildElement(
+    src,
+    "MoreEpisodesEndpoint",
+    dvbiNs,
+  );
+  const moreEpisodesURI = moreEpisodesEndpointEl
+    ? getChildValue(moreEpisodesEndpointEl, "URI", dvbiTypesNs)
+    : null;
 
-  const programInfoEndpointEl = getChildElement(src, "ProgramInfoEndpoint", DVBi_ns);
-  const programInfoURI = programInfoEndpointEl ? getChildValue(programInfoEndpointEl, "URI", DVBi_TYPES_ns) : null;
+  const programInfoEndpointEl = getChildElement(
+    src,
+    "ProgramInfoEndpoint",
+    dvbiNs,
+  );
+  const programInfoURI = programInfoEndpointEl
+    ? getChildValue(programInfoEndpointEl, "URI", dvbiTypesNs)
+    : null;
 
   return {
     id: cgsid,
@@ -604,168 +701,360 @@ function parseContentGuideSource(src: Element | null): ContentGuideSourceInfo | 
   };
 }
 
-function parseTVAAudioAttributesType(audioAttributesElement: Element | null): AccessibilityAudioAttributes | undefined {
-    if (!audioAttributesElement) return undefined;
-    const codingVal = getChildValue(audioAttributesElement, "Coding", TVA_ns, "href");
-    const mixTypeVal = getChildValue(audioAttributesElement, "MixType", TVA_ns, "href");
-    
-    return {
-        coding: AudioCodingCS(codingVal) as string | undefined,
-        mix_type: AudioPresentationCS(mixTypeVal) as string | undefined,
-        language: getChildValue(audioAttributesElement, "AudioLanguage", TVA_ns) || undefined,
-    };
+function parseTVAAudioAttributesType(
+  audioAttributesElement: Element | null,
+): AccessibilityAudioAttributes | undefined {
+  if (!audioAttributesElement) return undefined;
+  // Use undefined for namespace to mimic wildcard matching for TVA elements
+  const codingVal = getChildValue(
+    audioAttributesElement,
+    "Coding",
+    undefined,
+    "href",
+  );
+  const mixTypeVal = getChildValue(
+    audioAttributesElement,
+    "MixType",
+    undefined,
+    "href",
+  );
+
+  return {
+    coding: AudioCodingCS(codingVal) as string | undefined,
+    mix_type: AudioPresentationCS(mixTypeVal) as string | undefined,
+    language:
+      getChildValue(audioAttributesElement, "AudioLanguage", undefined) ||
+      undefined,
+  };
 }
 
 function accessibilityApplication(element: Element | null): string | undefined {
-    if (!element) return undefined;
-    const apps = getChildElements(element, "AppInformation", TVA_ns);
-    if (apps.length > 0) {
-        const reqStdEl = getChildElement(apps[0], "RequiredStandardVersion", TVA_ns);
-        const reqStd = reqStdEl ? StandardVersion(reqStdEl.textContent) : "unspecified platform";
-        
-        const reqOptsEls = getChildElements(apps[0], "RequiredOptionalFeature", TVA_ns);
-        const feat: string[] = [];
-        reqOptsEls.forEach(optEl => {
-            const mappedOpt = OptionalFeature(optEl.textContent);
-            if (mappedOpt) feat.push(mappedOpt as string);
-        });
-        return `${reqStd}${feat.length ? "; " : ""}${feat.join(", ")}`;
+  if (!element) return undefined;
+  // Use undefined for namespace to mimic wildcard matching for TVA elements
+  const apps = getChildElements(element, "AppInformation", undefined);
+  if (apps.length > 0) {
+    const reqStdEl = getChildElement(
+      apps[0],
+      "RequiredStandardVersion",
+      undefined,
+    );
+
+    let resolvedReqStd: string;
+    if (reqStdEl && reqStdEl.textContent) {
+      const sv = StandardVersion(reqStdEl.textContent); // sv is string | string[] | null
+      if (typeof sv === "string") {
+        resolvedReqStd = sv;
+      } else if (Array.isArray(sv) && sv.length > 0) {
+        resolvedReqStd = sv[0]; // Use the first element if it's an array
+      } else {
+        resolvedReqStd = "unspecified platform";
+      }
+    } else {
+      resolvedReqStd = "unspecified platform";
     }
-    return undefined;
+
+    const reqOptsEls = getChildElements(
+      apps[0],
+      "RequiredOptionalFeature",
+      undefined,
+    );
+    const feat: string[] = [];
+    reqOptsEls.forEach((optEl) => {
+      if (optEl.textContent) {
+        const mappedOpt = OptionalFeature(optEl.textContent); // mappedOpt is string | string[] | null
+        if (typeof mappedOpt === "string") {
+          feat.push(mappedOpt);
+        } else if (Array.isArray(mappedOpt)) {
+          feat.push(...mappedOpt); // Add all elements if it's an array of strings
+        }
+      }
+    });
+    return `${resolvedReqStd}${feat.length ? "; " : ""}${feat.join(", ")}`;
+  }
+  return undefined;
 }
 
-
 // Full implementation for ParseTVAAccessibilityAttributes
-function parseTVAAccessibilityAttributes(accessibilityElement: Element | null): AccessibilityAttributes | undefined {
+function parseTVAAccessibilityAttributes(
+  accessibilityElement: Element | null,
+): AccessibilityAttributes | undefined {
   if (!accessibilityElement) return undefined;
   const res: AccessibilityAttributes = {};
+  // Use undefined for namespace to mimic wildcard matching for TVA elements
 
-  const subAttributesElements = getChildElements(accessibilityElement, "SubtitleAttributes", TVA_ns);
+  const subAttributesElements = getChildElements(
+    accessibilityElement,
+    "SubtitleAttributes",
+    undefined,
+  );
   if (subAttributesElements.length > 0) {
-    res.subtitles = subAttributesElements.map(subEl => {
+    res.subtitles = subAttributesElements.map((subEl) => {
       const subt: AccessibilitySubtitleAttributes = {
-        language: getChildValue(subEl, "SubtitleLanguage", TVA_ns) || undefined,
-        carriage: SubtitleCarriageCS(getChildValues(subEl, "Carriage", TVA_ns, "href")) as string[] | undefined,
-        coding: SubtitleCodingCS(getChildValues(subEl, "Coding", TVA_ns, "href")) as string[] | undefined,
-        purpose: SubtitlePurposeCS(getChildValues(subEl, "Purpose", TVA_ns, "href")) as string[] | undefined,
-        forTTS: getChildValue(subEl, "SuitableForTTS", TVA_ns) || undefined,
+        language:
+          getChildValue(subEl, "SubtitleLanguage", undefined) || undefined,
+        carriage: SubtitleCarriageCS(
+          getChildValues(subEl, "Carriage", undefined, "href"),
+        ) as string[] | undefined,
+        coding: SubtitleCodingCS(
+          getChildValues(subEl, "Coding", undefined, "href"),
+        ) as string[] | undefined,
+        purpose: SubtitlePurposeCS(
+          getChildValues(subEl, "Purpose", undefined, "href"),
+        ) as string[] | undefined,
+        forTTS: getChildValue(subEl, "SuitableForTTS", undefined) || undefined,
         app: accessibilityApplication(subEl),
       };
       return subt;
     });
   }
 
-  const adAttributesElements = getChildElements(accessibilityElement, "AudioDescriptionAttributes", TVA_ns);
+  const adAttributesElements = getChildElements(
+    accessibilityElement,
+    "AudioDescriptionAttributes",
+    undefined,
+  );
   if (adAttributesElements.length > 0) {
-    res.audio_descriptions = adAttributesElements.map(adEl => {
-      const audioAttributes = getChildElement(adEl, "AudioAttributes", TVA_ns);
+    res.audio_descriptions = adAttributesElements.map((adEl) => {
+      const audioAttributes = getChildElement(
+        adEl,
+        "AudioAttributes",
+        undefined,
+      );
       const ad: AccessibilityAudioDescription = {
         audio_attributes: parseTVAAudioAttributesType(audioAttributes),
-        mix: (getChildValue(adEl, "ReceiverMix", TVA_ns) || "false").toLowerCase(),
+        mix: (
+          getChildValue(adEl, "ReceiverMix", undefined) || "false"
+        ).toLowerCase(),
         app: accessibilityApplication(adEl),
       };
       return ad;
     });
   }
-  
-  const signAttributesElements = getChildElements(accessibilityElement, "SigningAttributes", TVA_ns);
+
+  const signAttributesElements = getChildElements(
+    accessibilityElement,
+    "SigningAttributes",
+    undefined,
+  );
   if (signAttributesElements.length > 0) {
-      res.signings = signAttributesElements.map(saEl => {
-          const sa: AccessibilitySigning = {
-              coding: VideoCodecCS(getChildValue(saEl, "Coding", TVA_ns, "href")) as string | undefined,
-              language: getChildValue(saEl, "SignLanguage", TVA_ns) || undefined,
-              closed: getChildValue(saEl, "Closed", TVA_ns) || undefined,
-              app: accessibilityApplication(saEl),
-          };
-          return sa;
-      });
+    res.signings = signAttributesElements.map((saEl) => {
+      const sa: AccessibilitySigning = {
+        coding: VideoCodecCS(
+          getChildValue(saEl, "Coding", undefined, "href"),
+        ) as string | undefined,
+        language: getChildValue(saEl, "SignLanguage", undefined) || undefined,
+        closed: getChildValue(saEl, "Closed", undefined) || undefined,
+        app: accessibilityApplication(saEl),
+      };
+      return sa;
+    });
   }
 
-  const deAttributesElements = getChildElements(accessibilityElement, "DialogueEnhancementAttributes", TVA_ns);
-    if (deAttributesElements.length > 0) {
-        res.dialogue_enhancements = deAttributesElements.map(deEl => ({
-            audio_attributes: parseTVAAudioAttributesType(getChildElement(deEl, "AudioAttributes", TVA_ns)),
-            app: accessibilityApplication(deEl),
-        }));
-    }
+  const deAttributesElements = getChildElements(
+    accessibilityElement,
+    "DialogueEnhancementAttributes",
+    undefined,
+  );
+  if (deAttributesElements.length > 0) {
+    res.dialogue_enhancements = deAttributesElements.map((deEl) => ({
+      audio_attributes: parseTVAAudioAttributesType(
+        getChildElement(deEl, "AudioAttributes", undefined),
+      ),
+      app: accessibilityApplication(deEl),
+    }));
+  }
 
-  const spokenSubAttributesElements = getChildElements(accessibilityElement, "SpokenSubtitlesAttributes", TVA_ns);
-    if (spokenSubAttributesElements.length > 0) {
-        res.spoken_subtitles = spokenSubAttributesElements.map(ssEl => ({
-            audio_attributes: parseTVAAudioAttributesType(getChildElement(ssEl, "AudioAttributes", TVA_ns)),
-            app: accessibilityApplication(ssEl),
-        }));
-    }
-    
-  const createPurposeAppList = (els: Element[], tagName: string): AccessibilityAppAndPurpose[] => {
-      return els.map(el => ({
-          app: accessibilityApplication(el),
-          purpose: AccessibilityPurposeCS(getChildValues(el, "Purpose", TVA_ns, "href")) as string[] | undefined,
-      }));
+  const spokenSubAttributesElements = getChildElements(
+    accessibilityElement,
+    "SpokenSubtitlesAttributes",
+    undefined,
+  );
+  if (spokenSubAttributesElements.length > 0) {
+    res.spoken_subtitles = spokenSubAttributesElements.map((ssEl) => ({
+      audio_attributes: parseTVAAudioAttributesType(
+        getChildElement(ssEl, "AudioAttributes", undefined),
+      ),
+      app: accessibilityApplication(ssEl),
+    }));
+  }
+
+  const createPurposeAppList = (
+    els: Element[],
+    _: string,
+  ): AccessibilityAppAndPurpose[] => {
+    return els.map((el) => ({
+      app: accessibilityApplication(el),
+      purpose: AccessibilityPurposeCS(
+        getChildValues(el, "Purpose", undefined, "href"),
+      ) as string[] | undefined,
+    }));
   };
 
-  res.magnification_ui = createPurposeAppList(getChildElements(accessibilityElement, "MagnificationUIAttributes", TVA_ns), "MagnificationUIAttributes");
-  res.high_contrast_ui = createPurposeAppList(getChildElements(accessibilityElement, "HighContrastUIAttributes", TVA_ns), "HighContrastUIAttributes");
-  res.screen_reader_ui = createPurposeAppList(getChildElements(accessibilityElement, "ScreenReaderAttributes", TVA_ns), "ScreenReaderAttributes");
-  res.response_to_user_action_ui = createPurposeAppList(getChildElements(accessibilityElement, "ResponseToUserActionAttributes", TVA_ns), "ResponseToUserActionAttributes");
-  
+  res.magnification_ui = createPurposeAppList(
+    getChildElements(
+      accessibilityElement,
+      "MagnificationUIAttributes",
+      undefined,
+    ),
+    "MagnificationUIAttributes",
+  );
+  res.high_contrast_ui = createPurposeAppList(
+    getChildElements(
+      accessibilityElement,
+      "HighContrastUIAttributes",
+      undefined,
+    ),
+    "HighContrastUIAttributes",
+  );
+  res.screen_reader_ui = createPurposeAppList(
+    getChildElements(accessibilityElement, "ScreenReaderAttributes", undefined),
+    "ScreenReaderAttributes",
+  );
+  res.response_to_user_action_ui = createPurposeAppList(
+    getChildElements(
+      accessibilityElement,
+      "ResponseToUserActionAttributes",
+      undefined,
+    ),
+    "ResponseToUserActionAttributes",
+  );
+
   // Filter out empty arrays
   if (res.magnification_ui?.length === 0) delete res.magnification_ui;
   if (res.high_contrast_ui?.length === 0) delete res.high_contrast_ui;
   if (res.screen_reader_ui?.length === 0) delete res.screen_reader_ui;
-  if (res.response_to_user_action_ui?.length === 0) delete res.response_to_user_action_ui;
-
+  if (res.response_to_user_action_ui?.length === 0)
+    delete res.response_to_user_action_ui;
 
   return Object.keys(res).length > 0 ? res : undefined;
 }
 
-
 function parseCMCDInitInfo(element: Element | null): CmcdInitInfo | null {
-    if (!element) return null;
-    if (!element.hasAttribute("reportingMode") || !element.hasAttribute("reportingMethod") || !element.hasAttribute("version")) {
-        return null;
-    }
+  if (!element) return null;
+  if (
+    !element.hasAttribute("reportingMode") ||
+    !element.hasAttribute("reportingMethod") ||
+    !element.hasAttribute("version")
+  ) {
+    return null;
+  }
 
-    const cmcdInfo: Partial<CmcdInitInfo> = { enabled: true };
+  const cmcdInfo: Partial<CmcdInitInfo> = { enabled: true };
 
-    switch (element.getAttribute("reportingMode")) {
-        case "urn:dvb:metadata:cmcd:delivery:request":
-            // currently not used in dash.js, but we parse it
-            break;
-        default:
-            cmcdInfo.enabled = false;
-            break;
-    }
+  switch (element.getAttribute("reportingMode")) {
+    case "urn:dvb:metadata:cmcd:delivery:request":
+      // currently not used in dash.js, but we parse it
+      break;
+    default:
+      cmcdInfo.enabled = false;
+      break;
+  }
 
-    switch (element.getAttribute("reportingMethod")) {
-        case "urn:dvb:metadata:cmcd:delivery:customHTTPHeader":
-            cmcdInfo.mode = "header";
-            break;
-        case "urn:dvb:metadata:cmcd:delivery:queryArguments":
-            cmcdInfo.mode = "query";
-            break;
-        default:
-            cmcdInfo.enabled = false;
-            break;
-    }
+  switch (element.getAttribute("reportingMethod")) {
+    case "urn:dvb:metadata:cmcd:delivery:customHTTPHeader":
+      cmcdInfo.mode = "header";
+      break;
+    case "urn:dvb:metadata:cmcd:delivery:queryArguments":
+      cmcdInfo.mode = "query";
+      break;
+    default:
+      cmcdInfo.enabled = false;
+      break;
+  }
 
-    if (element.hasAttribute("enabledKeys")) {
-        cmcdInfo.enabledKeys = element.getAttribute("enabledKeys")!.split(" ");
-    }
-    if (element.hasAttribute("contentId")) {
-        cmcdInfo.cid = element.getAttribute("contentId")!;
-    }
-    cmcdInfo.version = parseInt(element.getAttribute("version")!, 10);
-    
-    return cmcdInfo.enabled ? (cmcdInfo as CmcdInitInfo) : null;
+  if (element.hasAttribute("enabledKeys")) {
+    cmcdInfo.enabledKeys = element.getAttribute("enabledKeys")!.split(" ");
+  }
+  if (element.hasAttribute("contentId")) {
+    cmcdInfo.cid = element.getAttribute("contentId")!;
+  }
+  cmcdInfo.version = parseInt(element.getAttribute("version")!, 10);
+
+  return cmcdInfo.enabled ? (cmcdInfo as CmcdInitInfo) : null;
 }
 
-
 // --- Main Service List Parser ---
-export function parseServiceListXml(xmlString: string, supportedDrmSystems?: string[]): ParsedServiceList {
+export function parseServiceListXml(
+  xmlString: string,
+  supportedDrmSystems?: string[],
+): ParsedServiceList {
   const parser = new DOMParser();
   const doc = parser.parseFromString(xmlString, XML_MIME);
-  const serviceListElement = doc.documentElement;
+
+  // Check for parser errors
+  const parserErrorElement = doc.getElementsByTagName("parsererror");
+  if (parserErrorElement.length > 0) {
+    console.error("[ServiceListParser] XML Parsing Error detected.");
+    let errorDetails = "No details available";
+    // Try to get more specific error message from the parsererror element
+    if (parserErrorElement[0].textContent) {
+      errorDetails = parserErrorElement[0].textContent.trim();
+    } else if (
+      parserErrorElement[0].childNodes.length > 0 &&
+      parserErrorElement[0].childNodes[0].nodeValue
+    ) {
+      errorDetails = parserErrorElement[0].childNodes[0].nodeValue.trim();
+    }
+    console.error("[ServiceListParser] Parser Error Details:", errorDetails);
+    console.error(
+      "[ServiceListParser] XML string (first 1000 chars):",
+      xmlString.substring(0, 1000),
+    );
+    return { services: [], regions: [], lcnTables: [], image: undefined }; // Return empty result
+  }
+
+  let serviceListElement: Element | null = doc.documentElement as Element;
+  console.log(
+    "[ServiceListParser] Initial Document Element - LocalName:",
+    serviceListElement.localName,
+    "NamespaceURI:",
+    serviceListElement.namespaceURI,
+  );
+
+  // If documentElement is not ServiceList, try to find it as a child.
+  if (serviceListElement.localName !== "ServiceList") {
+    console.warn(
+      `[ServiceListParser] Document element is not <ServiceList>. Attempting to find it as a child...`,
+    );
+    const foundServiceList = getChildElement(
+      doc.documentElement as Element,
+      "ServiceList",
+      undefined,
+    ); // Try with any namespace
+    if (foundServiceList) {
+      console.log(
+        `[ServiceListParser] Found <ServiceList> as a child with namespace "${foundServiceList.namespaceURI}". Proceeding with this element.`,
+      );
+      serviceListElement = foundServiceList;
+    } else {
+      console.error(
+        "[ServiceListParser] <ServiceList> element not found as document root or as a direct child. Cannot reliably parse services.",
+      );
+      return { services: [], regions: [], lcnTables: [], image: undefined }; // Return empty result
+    }
+  }
+
+  if (!serviceListElement) {
+    // Should not happen if logic above is correct, but as a safeguard
+    console.error(
+      "[ServiceListParser] ServiceList element is null after attempts to find it. Cannot parse.",
+    );
+    return { services: [], regions: [], lcnTables: [], image: undefined };
+  }
+
+  const effectiveDvbiNs: string | undefined =
+    serviceListElement.namespaceURI || undefined;
+  if (!effectiveDvbiNs) {
+    console.warn(
+      `[ServiceListParser] ServiceList element has no namespaceURI. Child DVB-I elements will be matched by local name only (wildcard namespace).`,
+    );
+  }
+  console.log(
+    "[ServiceListParser] Effective ServiceList Element - LocalName:",
+    serviceListElement.localName,
+    "NamespaceURI:",
+    effectiveDvbiNs,
+  );
 
   const result: ParsedServiceList = {
     services: [],
@@ -773,205 +1062,330 @@ export function parseServiceListXml(xmlString: string, supportedDrmSystems?: str
     lcnTables: [],
   };
 
-  const topRelatedMaterial = getChildElements(serviceListElement, "RelatedMaterial", DVBi_ns);
-  topRelatedMaterial.forEach(rm => {
-    const howRelated = getChildValue(rm, "HowRelated", TVA_ns, "href");
+  const topRelatedMaterial = getChildElements(
+    serviceListElement,
+    "RelatedMaterial",
+    effectiveDvbiNs,
+  );
+  topRelatedMaterial.forEach((rm) => {
+    const howRelated = getChildValue(rm, "HowRelated", undefined, "href");
     if (howRelated === DVBi_Service_List_Logo) {
-      const mediaLocator = getChildElement(rm, "MediaLocator", TVA_ns);
+      const mediaLocator = getChildElement(rm, "MediaLocator", undefined);
       result.image = getMedia(mediaLocator) || undefined;
     }
   });
 
-  const regionListElement = getChildElement(serviceListElement, "RegionList", DVBi_ns);
+  const regionListElement = getChildElement(
+    serviceListElement,
+    "RegionList",
+    effectiveDvbiNs,
+  );
   if (regionListElement) {
-    const regionElements = getChildElements(regionListElement, "Region", DVBi_ns);
-    result.regions = regionElements.map(re => {
-        const region: RegionInfo = {
-            regionID: re.getAttribute("regionID") || "",
-            selectable: re.getAttribute("selectable") !== "false",
-            countryCodes: re.getAttribute("countryCodes") || undefined,
-        };
-        const names = getTexts(getChildElements(re, "RegionName", DVBi_ns));
-        if (names.length === 1) region.regionName = names[0].text;
-        else if (names.length > 1) region.regionNames = names;
-        // TODO: Add parsing for WildcardPostcode, Postcode, PostcodeRange, Coordinates
-        return region;
+    const regionElements = getChildElements(
+      regionListElement,
+      "Region",
+      effectiveDvbiNs,
+    );
+    result.regions = regionElements.map((re) => {
+      const region: RegionInfo = {
+        regionID: re.getAttribute("regionID") || "",
+        selectable: re.getAttribute("selectable") !== "false",
+        countryCodes: re.getAttribute("countryCodes") || undefined,
+      };
+      const names = getTexts(
+        getChildElements(re, "RegionName", effectiveDvbiNs),
+      );
+      if (names.length === 1) region.regionName = names[0].text;
+      else if (names.length > 1) region.regionNames = names;
+      // TODO: Add parsing for WildcardPostcode, Postcode, PostcodeRange, Coordinates
+      return region;
     });
   }
 
-  const lcnTableElements = getChildElements(serviceListElement, "LCNTable", DVBi_ns);
-  result.lcnTables = lcnTableElements.map(lte => {
+  const lcnTableElements = getChildElements(
+    serviceListElement,
+    "LCNTable",
+    effectiveDvbiNs,
+  );
+  result.lcnTables = lcnTableElements.map((lte) => {
     const lcnTable: LcnTableInfo = {
       lcn: [],
-      defaultRegion: lte.getAttribute("defaultRegion") === "true" || !getChildElements(lte, "TargetRegion", DVBi_ns).length,
-      targetRegions: getChildValues(lte, "TargetRegion", DVBi_ns)
+      defaultRegion:
+        lte.getAttribute("defaultRegion") === "true" ||
+        !getChildElements(lte, "TargetRegion", effectiveDvbiNs).length,
+      targetRegions: getChildValues(lte, "TargetRegion", effectiveDvbiNs),
     };
-    const lcnElements = getChildElements(lte, "LCN", DVBi_ns);
-    lcnTable.lcn = lcnElements.map(lcne => ({
+    const lcnElements = getChildElements(lte, "LCN", effectiveDvbiNs);
+    lcnTable.lcn = lcnElements.map((lcne) => ({
       serviceRef: lcne.getAttribute("serviceRef") || "",
       channelNumber: parseInt(lcne.getAttribute("channelNumber") || "0", 10),
     }));
     return lcnTable;
   });
-  
+
   let defaultContentGuide: ContentGuideSourceInfo | null = null;
-  const topCgsElement = getChildElement(serviceListElement, "ContentGuideSource", DVBi_ns);
+  const topCgsElement = getChildElement(
+    serviceListElement,
+    "ContentGuideSource",
+    effectiveDvbiNs,
+  );
   if (topCgsElement) {
-      defaultContentGuide = parseContentGuideSource(topCgsElement);
+    defaultContentGuide = parseContentGuideSource(
+      topCgsElement,
+      effectiveDvbiNs,
+      undefined,
+    );
   }
 
-  const cgsListElement = getChildElement(serviceListElement, "ContentGuideSourceList", DVBi_ns);
+  const cgsListElement = getChildElement(
+    serviceListElement,
+    "ContentGuideSourceList",
+    effectiveDvbiNs,
+  );
   const contentGuideSourcesList: Record<string, ContentGuideSourceInfo> = {};
   if (cgsListElement) {
-      getChildElements(cgsListElement, "ContentGuideSource", DVBi_ns).forEach(cgsEl => {
-          const cgs = parseContentGuideSource(cgsEl);
-          if (cgs && cgs.id) {
-              contentGuideSourcesList[cgs.id] = cgs;
-          }
-      });
+    getChildElements(
+      cgsListElement,
+      "ContentGuideSource",
+      effectiveDvbiNs,
+    ).forEach((cgsEl) => {
+      const cgs = parseContentGuideSource(cgsEl, effectiveDvbiNs, undefined);
+      if (cgs && cgs.id) {
+        contentGuideSourcesList[cgs.id] = cgs;
+      }
+    });
   }
 
-  const serviceElements = getChildElements(serviceListElement, "Service", DVBi_ns);
+  const serviceElements = getChildElements(
+    serviceListElement,
+    "Service",
+    effectiveDvbiNs,
+  );
+  console.log(
+    "[ServiceListParser] Found serviceElements count (targetting Service in effectiveDvbiNs):",
+    serviceElements.length,
+  );
   let maxLcn = 0;
 
-  serviceElements.forEach(serviceEl => {
-    const uniqueIdentifier = getChildValue(serviceEl, "UniqueIdentifier", DVBi_ns);
-    if (!uniqueIdentifier) return;
+  serviceElements.forEach((serviceEl, index) => {
+    const uniqueIdentifier = getChildValue(
+      serviceEl,
+      "UniqueIdentifier",
+      effectiveDvbiNs,
+    );
+    if (!uniqueIdentifier) {
+      console.warn(
+        `[ServiceListParser] Service element at index ${index} is missing UniqueIdentifier. Skipping.`,
+      );
+      return;
+    }
 
     const chan: Partial<ChannelRepresentation> = { id: uniqueIdentifier };
-    chan.titles = getTexts(getChildElements(serviceEl, "ServiceName", DVBi_ns));
-    const providerNames = getTexts(getChildElements(serviceEl, "ProviderName", DVBi_ns));
+    chan.titles = getTexts(
+      getChildElements(serviceEl, "ServiceName", effectiveDvbiNs),
+    );
+    const providerNames = getTexts(
+      getChildElements(serviceEl, "ProviderName", effectiveDvbiNs),
+    );
     if (providerNames.length > 0) {
-        chan.provider = providerNames[0].text;
-        if (providerNames.length > 1) chan.providers = providerNames;
+      chan.provider = providerNames[0].text;
+      if (providerNames.length > 1) chan.providers = providerNames;
     }
-    
-    let cgsRefId = getChildValue(serviceEl, "ContentGuideSourceRef", DVBi_ns);
+
+    const cgsRefId = getChildValue(
+      serviceEl,
+      "ContentGuideSourceRef",
+      effectiveDvbiNs,
+    );
     if (cgsRefId && contentGuideSourcesList[cgsRefId]) {
-        const cgs = contentGuideSourcesList[cgsRefId];
-        chan.contentGuideURI = cgs.contentGuideURI || undefined;
-        chan.moreEpisodesURI = cgs.moreEpisodesURI || undefined;
-        chan.programInfoURI = cgs.programInfoURI || undefined;
+      const cgs = contentGuideSourcesList[cgsRefId];
+      chan.contentGuideURI = cgs.contentGuideURI || undefined;
+      chan.moreEpisodesURI = cgs.moreEpisodesURI || undefined;
+      chan.programInfoURI = cgs.programInfoURI || undefined;
     } else {
-        const directCgsEl = getChildElement(serviceEl, "ContentGuideSource", DVBi_ns);
-        const directCgs = parseContentGuideSource(directCgsEl);
-        if (directCgs) {
-            chan.contentGuideURI = directCgs.contentGuideURI || undefined;
-            chan.moreEpisodesURI = directCgs.moreEpisodesURI || undefined;
-            chan.programInfoURI = directCgs.programInfoURI || undefined;
-        } else if (defaultContentGuide) {
-            chan.contentGuideURI = defaultContentGuide.contentGuideURI || undefined;
-            chan.moreEpisodesURI = defaultContentGuide.moreEpisodesURI || undefined;
-            chan.programInfoURI = defaultContentGuide.programInfoURI || undefined;
-        }
+      const directCgsEl = getChildElement(
+        serviceEl,
+        "ContentGuideSource",
+        effectiveDvbiNs,
+      );
+      const directCgs = parseContentGuideSource(
+        directCgsEl,
+        effectiveDvbiNs,
+        undefined,
+      );
+      if (directCgs) {
+        chan.contentGuideURI = directCgs.contentGuideURI || undefined;
+        chan.moreEpisodesURI = directCgs.moreEpisodesURI || undefined;
+        chan.programInfoURI = directCgs.programInfoURI || undefined;
+      } else if (defaultContentGuide) {
+        chan.contentGuideURI = defaultContentGuide.contentGuideURI || undefined;
+        chan.moreEpisodesURI = defaultContentGuide.moreEpisodesURI || undefined;
+        chan.programInfoURI = defaultContentGuide.programInfoURI || undefined;
+      }
     }
 
     chan.parallelApps = [];
     chan.mediaPresentationApps = [];
-    getChildElements(serviceEl, "RelatedMaterial", DVBi_ns).forEach(rmEl => {
-        const howRelated = getChildValue(rmEl, "HowRelated", TVA_ns, "href");
-        const mediaLocatorEl = getChildElement(rmEl, "MediaLocator", TVA_ns);
+    getChildElements(serviceEl, "RelatedMaterial", effectiveDvbiNs).forEach(
+      (rmEl) => {
+        const howRelated = getChildValue(rmEl, "HowRelated", undefined, "href");
+        const mediaLocatorEl = getChildElement(rmEl, "MediaLocator", undefined);
         if (howRelated === DVBi_Service_Logo) {
-            chan.image = getMedia(mediaLocatorEl) || undefined;
+          chan.image = getMedia(mediaLocatorEl) || undefined;
         } else if (howRelated === DVBi_Out_Of_Service_Logo) {
-            chan.out_of_service_image = getMedia(mediaLocatorEl) || undefined;
-        } else if (howRelated === DVBi_App_In_Parallel || howRelated === DVBi_App_Controlling_Media) {
-            const mediaUriEl = mediaLocatorEl ? getChildElement(mediaLocatorEl, "MediaUri", TVA_ns) : null;
-            if (mediaUriEl && mediaUriEl.textContent) {
-                const app: MediaPresentationApp = {
-                    url: mediaUriEl.textContent.trim(),
-                    contentType: mediaUriEl.getAttribute("contentType") || "",
-                };
-                if (howRelated === DVBi_App_In_Parallel) chan.parallelApps?.push(app);
-                else chan.mediaPresentationApps?.push(app);
-            }
+          chan.out_of_service_image = getMedia(mediaLocatorEl) || undefined;
+        } else if (
+          howRelated === DVBi_App_In_Parallel ||
+          howRelated === DVBi_App_Controlling_Media
+        ) {
+          const mediaUriEl = mediaLocatorEl
+            ? getChildElement(mediaLocatorEl, "MediaUri", undefined)
+            : null;
+          if (mediaUriEl && mediaUriEl.textContent) {
+            const app: MediaPresentationApp = {
+              url: mediaUriEl.textContent.trim(),
+              contentType: mediaUriEl.getAttribute("contentType") || "",
+            };
+            if (howRelated === DVBi_App_In_Parallel)
+              chan.parallelApps?.push(app);
+            else chan.mediaPresentationApps?.push(app);
+          }
         }
-    });
-    
-    const prominenceListEl = getChildElement(serviceEl, "ProminenceList", DVBi_ns);
+      },
+    );
+
+    const prominenceListEl = getChildElement(
+      serviceEl,
+      "ProminenceList",
+      effectiveDvbiNs,
+    );
     if (prominenceListEl) {
-        chan.prominences = getChildElements(prominenceListEl, "Prominence", DVBi_ns).map(pEl => ({
-            country: pEl.getAttribute("country") || undefined,
-            region: pEl.getAttribute("region") || undefined,
-            ranking: parseInt(pEl.getAttribute("ranking") || "", 10) || undefined,
-        })).filter(p => p.ranking !== undefined) as ProminenceInfo[];
+      chan.prominences = getChildElements(
+        prominenceListEl,
+        "Prominence",
+        effectiveDvbiNs,
+      )
+        .map((pEl) => ({
+          country: pEl.getAttribute("country") || undefined,
+          region: pEl.getAttribute("region") || undefined,
+          ranking: parseInt(pEl.getAttribute("ranking") || "", 10) || undefined,
+        }))
+        .filter((p) => p.ranking !== undefined) as ProminenceInfo[];
     }
 
     chan.serviceInstances = [];
-    getChildElements(serviceEl, "ServiceInstance", DVBi_ns).forEach(siEl => {
+    getChildElements(serviceEl, "ServiceInstance", effectiveDvbiNs).forEach(
+      (siEl) => {
         const instance: Partial<ServiceInstanceRepresentation> = {};
         instance.priority = parseInt(siEl.getAttribute("priority") || "1", 10);
-        instance.titles = getTexts(getChildElements(siEl, "DisplayName", DVBi_ns));
-        
+        instance.titles = getTexts(
+          getChildElements(siEl, "DisplayName", effectiveDvbiNs),
+        );
+
         instance.contentProtection = [];
-        getChildElements(siEl, "ContentProtection", DVBi_ns).forEach(cpEl => {
-            getChildElements(cpEl, "DRMSystemId", DVBi_ns).forEach(drmEl => {
+        getChildElements(siEl, "ContentProtection", effectiveDvbiNs).forEach(
+          (cpEl) => {
+            getChildElements(cpEl, "DRMSystemId", effectiveDvbiNs).forEach(
+              (drmEl) => {
                 const drm: DrmSystemRepresentation = {
-                    drmSystemId: drmEl.textContent?.trim(),
-                    encryptionScheme: drmEl.getAttribute("encryptionScheme") || undefined,
-                    cpsIndex: drmEl.getAttribute("cpsIndex") || undefined,
+                  drmSystemId: drmEl.textContent?.trim(),
+                  encryptionScheme:
+                    drmEl.getAttribute("encryptionScheme") || undefined,
+                  cpsIndex: drmEl.getAttribute("cpsIndex") || undefined,
                 };
                 instance.contentProtection?.push(drm);
-            });
-        });
+              },
+            );
+          },
+        );
 
         if (supportedDrmSystems && instance.contentProtection.length > 0) {
-            const isSupported = instance.contentProtection.some(cp => 
-                cp.drmSystemId && supportedDrmSystems.includes(cp.drmSystemId.toLowerCase())
-            );
-            if (!isSupported) return;
+          const isSupported = instance.contentProtection.some(
+            (cp) =>
+              cp.drmSystemId &&
+              supportedDrmSystems.includes(cp.drmSystemId.toLowerCase()),
+          );
+          if (!isSupported) return;
         }
 
-        const dashDeliveryEl = getChildElement(siEl, "DASHDeliveryParameters", DVBi_ns);
+        const dashDeliveryEl = getChildElement(
+          siEl,
+          "DASHDeliveryParameters",
+          effectiveDvbiNs,
+        );
         if (dashDeliveryEl) {
-            instance.dashUrl = getChildValue(dashDeliveryEl, "URI", DVBi_TYPES_ns) || undefined;
-            const cmcdEl = getChildElement(dashDeliveryEl, "CMCD", DVBi_ns);
-            instance.CMCDinit = parseCMCDInitInfo(cmcdEl);
+          const uriBasedLocationEl = getChildElement(
+            dashDeliveryEl,
+            "UriBasedLocation",
+            effectiveDvbiNs,
+          );
+          if (uriBasedLocationEl) {
+            instance.dashUrl =
+              getChildValue(uriBasedLocationEl, "URI", undefined) || undefined;
+          }
+          const cmcdEl = getChildElement(
+            dashDeliveryEl,
+            "CMCD",
+            effectiveDvbiNs,
+          );
+          instance.CMCDinit = parseCMCDInitInfo(cmcdEl);
         }
-        
-        const contentAttributesEl = getChildElement(siEl, "ContentAttributes", DVBi_ns);
+
+        const contentAttributesEl = getChildElement(
+          siEl,
+          "ContentAttributes",
+          effectiveDvbiNs,
+        );
         if (contentAttributesEl) {
-            const accessibilityEl = getChildElement(contentAttributesEl, "AccessibilityAttributes", TVA_ns);
-             if (!chan.accessibility_attributes && accessibilityEl) {
-                chan.accessibility_attributes = parseTVAAccessibilityAttributes(accessibilityEl);
-            }
+          const accessibilityEl = getChildElement(
+            contentAttributesEl,
+            "AccessibilityAttributes",
+            undefined,
+          );
+          if (!chan.accessibility_attributes && accessibilityEl) {
+            chan.accessibility_attributes =
+              parseTVAAccessibilityAttributes(accessibilityEl);
+          }
         }
         chan.serviceInstances?.push(instance as ServiceInstanceRepresentation);
-    });
-    
+      },
+    );
+
     let lcnAssigned = false;
     if (result.lcnTables && result.lcnTables.length > 0) {
-        const lcnTableToUse = result.lcnTables.find(lt => lt.defaultRegion) || result.lcnTables[0];
-        const lcnEntry = lcnTableToUse.lcn.find(l => l.serviceRef === chan.id);
-        if (lcnEntry) {
-            chan.lcn = lcnEntry.channelNumber;
-            if (chan.lcn > maxLcn) maxLcn = chan.lcn;
-            lcnAssigned = true;
-        }
+      const lcnTableToUse =
+        result.lcnTables.find((lt) => lt.defaultRegion) || result.lcnTables[0];
+      const lcnEntry = lcnTableToUse.lcn.find((l) => l.serviceRef === chan.id);
+      if (lcnEntry) {
+        chan.lcn = lcnEntry.channelNumber;
+        if (chan.lcn > maxLcn) maxLcn = chan.lcn;
+        lcnAssigned = true;
+      }
     }
-    
+
     if (!lcnAssigned && !LCN_services_only) {
-        chan.lcn = First_undeclared_channel + result.services.length;
+      chan.lcn = First_undeclared_channel + result.services.length;
     } else if (!lcnAssigned && LCN_services_only) {
-        return;
+      return;
     }
-    
+
     if (chan.lcn === undefined) {
-        if (LCN_services_only) return;
-        chan.lcn = First_undeclared_channel + result.services.length; 
+      if (LCN_services_only) return;
+      chan.lcn = First_undeclared_channel + result.services.length;
     }
 
     result.services.push(chan as ChannelRepresentation);
   });
-  
-   result.services.forEach(s => {
-        if (s.lcn && s.lcn > maxLcn && s.lcn < First_undeclared_channel) maxLcn = s.lcn;
-    });
-    result.services.forEach(s => {
-        if (s.lcn === undefined || s.lcn < 0) {
-            s.lcn = ++maxLcn;
-        }
-    });
+
+  result.services.forEach((s) => {
+    if (s.lcn && s.lcn > maxLcn && s.lcn < First_undeclared_channel)
+      maxLcn = s.lcn;
+  });
+  result.services.forEach((s) => {
+    if (s.lcn === undefined || s.lcn < 0) {
+      s.lcn = ++maxLcn;
+    }
+  });
 
   return result;
 }
