@@ -90,6 +90,16 @@ export function Player() {
 
   const timeoutIdRef = useRef<number | null>(null);
 
+  const [cursor, setCursor] = useState("default");
+
+  useEffect(() => {
+    document.body.style.cursor = cursor;
+
+    return () => {
+      document.body.style.cursor = "default";
+    };
+  }, [cursor]);
+
   // Non-modal ui visibility
   const [opacity, setOpacity] = useDampedSignal(0);
 
@@ -99,6 +109,7 @@ export function Player() {
 
   const handleMouseMove = useCallback(() => {
     setOpacity(1);
+    setCursor("default");
 
     if (timeoutIdRef.current) {
       clearTimeout(timeoutIdRef.current);
@@ -131,9 +142,25 @@ export function Player() {
       // Set new timeout to hide UI only if video is actually playing
       timeoutIdRef.current = window.setTimeout(() => {
         setOpacity(0);
+        setCursor("none");
       }, 2000);
     }
-  }, [setOpacity, playerInstance]);
+  }, [setOpacity, playerInstance, setCursor]);
+
+  // Effect to handle global mouse move for UI visibility
+  useEffect(() => {
+    document.body.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      document.body.removeEventListener("mousemove", handleMouseMove);
+      setCursor("default");
+      // Clearing the timeout is also important on unmount if it's active
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+    };
+  }, [handleMouseMove, setCursor]);
 
   useEffect(() => {
     // Cleanup the timeout when the component unmounts
@@ -170,6 +197,12 @@ export function Player() {
       video.id = "dashjs-video-player";
       video.muted = false;
       video.crossOrigin = "anonymous";
+      //offscreen
+      video.style.position = "absolute";
+      video.style.left = "-9999px";
+      video.style.top = "-9999px";
+
+      document.body.appendChild(video);
       videoElementRef.current = video;
     }
 
@@ -371,7 +404,7 @@ export function Player() {
         </button>
       </div> */}
       <Suspense>
-        <Fullscreen onPointerMove={handleMouseMove} flexDirection={"column"}>
+        <Fullscreen flexDirection={"column"}>
           {/* Background Video Player */}
           {videoElementRef.current && (
             <Video
