@@ -78,7 +78,6 @@ export function Player() {
   const setPlayerInstance = useAppStore((state) => state.setPlayerInstance);
 
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
-  const [hasSourceBeenAttached, setHasSourceBeenAttached] = useState(false);
 
   const [activeSettingsPage, setActiveSettingsPage] = useState<string | null>(
     null,
@@ -182,28 +181,57 @@ export function Player() {
     if (serviceInstanceWithDash && serviceInstanceWithDash.dashUrl) {
       // Valid DASH URL found for the current channel
       try {
+        // Dash.js attachSource typically handles replacing the current source.
         playerInstance.attachSource(serviceInstanceWithDash.dashUrl);
-        setHasSourceBeenAttached(true); // Mark that source has been attached
         playerInstance.play(); // Explicitly play after attaching source
       } catch (error) {
         console.error("Error attaching source or playing:", error);
-        setHasSourceBeenAttached(false); // Attachment failed
       }
     } else {
       // No valid DASH URL for the current channel (or no channel selected initially)
       // Reset player only if a source was previously attached.
-      try {
-        if (playerInstance && hasSourceBeenAttached) {
-          // Check our flag
-          playerInstance.reset();
-          setHasSourceBeenAttached(false); // Mark that source has been reset
+      let isSourceCurrentlyAttached = false;
+      if (playerInstance) {
+        try {
+          if (playerInstance.getSource()) {
+            isSourceCurrentlyAttached = true;
+          }
+        } catch (error) {
+          // Check if the error is the specific "source not attached" error
+          // Assuming MediaPlayer.errors.SOURCE_NOT_ATTACHED_ERROR is accessible
+          // If not, you might need to check error.code or error.message string
+          if (
+            typeof error === "string" &&
+            error === "SOURCE_NOT_ATTACHED_ERROR"
+          ) {
+            // This is expected if no source is attached.
+            isSourceCurrentlyAttached = false;
+          } else {
+            // Log other unexpected errors from getSource()
+            console.error("Error checking player source for reset:", error);
+            isSourceCurrentlyAttached = false; // Assume not attached on other errors too for safety
+          }
         }
-      } catch (error) {
-        console.error("Error resetting player:", error); // Updated error message
-        setHasSourceBeenAttached(false); // If reset fails, assume source is no longer reliably attached
+      }
+
+      if (playerInstance && isSourceCurrentlyAttached) {
+        try {
+          playerInstance.reset();
+          // Re-attach the view (video element)
+          if (videoElementRef.current) {
+            playerInstance.attachView(videoElementRef.current);
+          } else {
+            console.error(
+              "Cannot attach player view: videoElementRef.current is null",
+            );
+            // This is a critical state, consider setting a global error
+          }
+        } catch (error) {
+          console.error("Error resetting player and attaching view:", error);
+        }
       }
     }
-  }, [currentChannel, playerInstance, channels, hasSourceBeenAttached]); // Added hasSourceBeenAttached
+  }, [currentChannel, playerInstance, channels]);
 
   // --- UI Event Handlers (Examples) ---
   const handleOpenEpg = useCallback(() => setIsEpgVisible(true), []);
@@ -429,9 +457,12 @@ export function Player() {
                 <Text fontSize={30} color="red" textAlign="center">
                   Error
                 </Text>
-                <Text fontSize={18} color="white" textAlign="center">
-                  {" "}
-                  {/* Allow text wrapping */}
+                <Text
+                  fontSize={18}
+                  color="white"
+                  textAlign="center"
+                  wordBreak={"break-all"}
+                >
                   {globalError}
                 </Text>
                 <Container
