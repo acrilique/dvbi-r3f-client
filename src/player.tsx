@@ -22,6 +22,11 @@ import { ThreeEvent, useFrame } from "@react-three/fiber";
 import { computed, Signal } from "@preact/signals-react";
 import { MathUtils } from "three";
 
+const HAVE_FUTURE_DATA =
+  typeof HTMLMediaElement !== "undefined" && HTMLMediaElement.HAVE_FUTURE_DATA
+    ? HTMLMediaElement.HAVE_FUTURE_DATA
+    : 3;
+
 function useDampedSignal(initialValue: number, dampingFactor = 7) {
   const signal = useMemo(() => new Signal(initialValue), [initialValue]);
   const target = useRef(initialValue);
@@ -94,14 +99,41 @@ export function Player() {
 
   const handleMouseMove = useCallback(() => {
     setOpacity(1);
+
     if (timeoutIdRef.current) {
       clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
     }
-    // Set new timeout to hide UI
-    timeoutIdRef.current = window.setTimeout(() => {
-      setOpacity(0);
-    }, 2000);
-  }, [setOpacity]);
+
+    let blockUIOverlay = true;
+    if (playerInstance && videoElementRef.current) {
+      try {
+        const isPlayerReady = playerInstance.isReady();
+        const isPlayerPaused = playerInstance.isPaused(); // This might throw
+        const videoElement = videoElementRef.current;
+
+        if (
+          isPlayerReady &&
+          !isPlayerPaused &&
+          videoElement.readyState >= HAVE_FUTURE_DATA
+        ) {
+          blockUIOverlay = false; // Allow transparency
+        }
+      } catch (e) {
+        console.warn(
+          "Error determining player state for UI overlay (isPaused might have thrown):",
+          e,
+        );
+      }
+    }
+
+    if (!blockUIOverlay) {
+      // Set new timeout to hide UI only if video is actually playing
+      timeoutIdRef.current = window.setTimeout(() => {
+        setOpacity(0);
+      }, 2000);
+    }
+  }, [setOpacity, playerInstance]);
 
   useEffect(() => {
     // Cleanup the timeout when the component unmounts
