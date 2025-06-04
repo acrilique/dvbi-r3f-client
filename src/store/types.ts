@@ -18,6 +18,17 @@ export interface ParentalRating {
   minimumage?: number;
 }
 
+export interface CreditItem {
+  role?: string; // href from Role element
+  personName?: LocalizedString; // From PersonName or OrganizationName
+  characterName?: LocalizedString; // From Character
+}
+
+export interface KeywordItem {
+  type?: string; // From Type element
+  value: string; // From Keyword content
+}
+
 export interface ProgramRepresentation {
   id: string;
   titles: LocalizedString[];
@@ -26,9 +37,17 @@ export interface ProgramRepresentation {
   description?: string;
   parentalRatings?: ParentalRating[];
   cpsIndex?: string;
-  bilingual?: boolean;
-  channelImage?: string; // URL or MediaRepresentation
-  channelStreamUrl?: string;
+  bilingual?: boolean; // This might be derived from audio/subtitle languages
+  channelImage?: string; // URL or MediaRepresentation - usually part of ChannelRepresentation
+  channelStreamUrl?: string; // Usually part of ServiceInstanceRepresentation
+
+  // New fields for Task C.3
+  genre?: string; // From Genre href (first one, simplified)
+  // TODO: Consider if genre should be LocalizedString[] if Genre has text content + lang
+  mediaImage?: MediaRepresentation; // From RelatedMaterial
+  credits?: CreditItem[]; // From CreditsList
+  keywords?: KeywordItem[]; // From Keyword elements
+  accessibilityAttributes?: AccessibilityAttributes; // Program-level accessibility
 }
 
 // --- Accessibility Types ---

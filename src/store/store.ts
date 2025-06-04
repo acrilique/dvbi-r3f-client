@@ -244,7 +244,11 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
       serviceListInfo: null,
     });
     try {
-      const response = await fetch(finalFetchUrl);
+      const response = await fetch(finalFetchUrl, {
+        headers: {
+          Accept: "text/plain, */*, application/vnd.dvb.dvbi.r6",
+        },
+      });
       if (!response.ok) {
         throw new Error(
           `Failed to fetch service list: ${response.status} ${response.statusText} from ${finalFetchUrl}`,

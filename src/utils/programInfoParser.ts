@@ -2,16 +2,38 @@ import {
   ProgramRepresentation,
   LocalizedString,
   ParentalRating,
+  CreditItem,
+  KeywordItem,
+  AccessibilityAttributes, // This will be provided by xmlParserUtils if parseTVAAccessibilityAttributes is used
+  MediaRepresentation, // This will be provided by xmlParserUtils if getMedia is used
 } from "../store/types";
+import {
+  getChildElements,
+  getChildElement,
+  getChildValue,
+  getMedia,
+  parseTVAAccessibilityAttributes,
+  elementLanguage, // Used by getLocalizedTexts
+} from "../utils/xmlParserUtils";
+
+// --- Constants ---
+// Fallback namespace for getElementsByTagNameNS when a specific one isn't required (wildcard)
+const WILDCARD_NS = "*"; // This can remain if local helpers still use it, or be removed if all helpers use undefined for wildcard
+// HowRelated URN for Program Image (TVA)
+const TVA_Program_Image_HowRelated_href =
+  "urn:tva:metadata:cs:HowRelatedCS:2012:19"; // As per task C.3
 
 // Helper to get a single child element's text content
 const getChildElementText = (
   element: Element | null,
   tagName: string,
-  namespace: string,
+  namespace: string | undefined, // Updated to accept undefined
 ): string | undefined => {
   if (!element) return undefined;
-  const child = element.getElementsByTagNameNS(namespace, tagName)?.[0];
+  const child = element.getElementsByTagNameNS(
+    namespace || WILDCARD_NS,
+    tagName,
+  )?.[0];
   return child?.textContent?.trim();
 };
 
@@ -19,15 +41,17 @@ const getChildElementText = (
 const getLocalizedTexts = (
   parentElement: Element | null,
   tagName: string,
-  namespace: string,
+  namespace: string | undefined, // Updated to accept undefined
 ): LocalizedString[] => {
   if (!parentElement) return [];
   const results: LocalizedString[] = [];
-  const elements = parentElement.getElementsByTagNameNS(namespace, tagName);
+  const elements = parentElement.getElementsByTagNameNS(
+    namespace || WILDCARD_NS,
+    tagName,
+  );
   for (let i = 0; i < elements.length; i++) {
     const el = elements[i];
-    const lang =
-      el.getAttribute("xml:lang") || el.getAttribute("lang") || "und"; // Default to 'undetermined'
+    const lang = elementLanguage(el); // Use elementLanguage helper
     const text = el.textContent?.trim();
     if (text) {
       results.push({ lang, text });
@@ -39,21 +63,24 @@ const getLocalizedTexts = (
 // Helper to parse ParentalRating elements
 const parseParentalRatings = (
   programInfoElement: Element,
-  tvaNamespace: string,
+  tvaNamespace: string | undefined, // Updated to accept undefined
 ): ParentalRating[] => {
   const ratings: ParentalRating[] = [];
   const parentalGuidanceElements = programInfoElement.getElementsByTagNameNS(
-    tvaNamespace,
+    tvaNamespace || WILDCARD_NS,
     "ParentalGuidance",
   );
   for (let i = 0; i < parentalGuidanceElements.length; i++) {
     const guidanceElement = parentalGuidanceElements[i];
     const minimumAgeElement = guidanceElement.getElementsByTagNameNS(
-      tvaNamespace,
+      tvaNamespace || WILDCARD_NS,
       "MinimumAge",
     )?.[0];
     const ratingSystem = guidanceElement
-      .getElementsByTagNameNS(tvaNamespace, "ParentalRating")?.[0]
+      .getElementsByTagNameNS(
+        tvaNamespace || WILDCARD_NS,
+        "ParentalRating",
+      )?.[0]
       ?.getAttribute("href");
 
     if (minimumAgeElement?.textContent) {
@@ -72,16 +99,16 @@ const parseParentalRatings = (
 // Parses a single <ProgramInformation> or <ScheduleEvent> like element into ProgramRepresentation
 const mapXmlToProgramRepresentation = (
   progElement: Element,
-  cridNamespace: string,
-  tvaNamespace: string,
+  cridNamespace: string | undefined, // Updated to accept undefined
+  tvaNamespace: string | undefined, // Updated to accept undefined
 ): ProgramRepresentation | null => {
   const programId =
     progElement.getAttribute("programId") ||
-    getChildElementText(progElement, "InstanceMetadataId", cridNamespace) ||
+    getChildElementText(progElement, "InstanceMetadataId", cridNamespace) || // cridNamespace will be undefined
     "";
   if (!programId) return null; // Essential identifier
 
-  const titles = getLocalizedTexts(progElement, "Title", tvaNamespace);
+  const titles = getLocalizedTexts(progElement, "Title", tvaNamespace); // tvaNamespace will be undefined
   if (titles.length === 0) return null; // Essential information
 
   // Published start and end times (UTC)
@@ -91,13 +118,13 @@ const mapXmlToProgramRepresentation = (
   let endTimeEpoch: number | undefined;
 
   const basicDescription = progElement.getElementsByTagNameNS(
-    tvaNamespace,
+    tvaNamespace || WILDCARD_NS,
     "BasicDescription",
   )?.[0];
   if (!basicDescription) return null; // BasicDescription is crucial for many fields
 
   const synopsisElements = basicDescription.getElementsByTagNameNS(
-    tvaNamespace,
+    tvaNamespace || WILDCARD_NS,
     "Synopsis",
   );
   let description: string | undefined;
@@ -119,25 +146,25 @@ const mapXmlToProgramRepresentation = (
     description = chosenSynopsis?.textContent?.trim();
   }
 
-  const programInfoTable = progElement.closest("ProgramLocationTable");
-  const scheduleEvent = progElement.closest("ScheduleEvent");
+  const programInfoTable = progElement.closest("ProgramLocationTable"); // closest doesn't use namespace
+  const scheduleEvent = progElement.closest("ScheduleEvent"); // closest doesn't use namespace
 
   if (scheduleEvent) {
     // Typically from a <Schedule> context
     const startTimeStr = getChildElementText(
       scheduleEvent,
       "PublishedStartTime",
-      tvaNamespace,
+      tvaNamespace, // tvaNamespace will be undefined
     );
     const durationStr = getChildElementText(
       scheduleEvent,
       "PublishedDuration",
-      tvaNamespace,
+      tvaNamespace, // tvaNamespace will be undefined
     );
     const endTimeStr = getChildElementText(
       scheduleEvent,
       "PublishedEndTime",
-      tvaNamespace,
+      tvaNamespace, // tvaNamespace will be undefined
     );
 
     if (startTimeStr) {
@@ -166,12 +193,12 @@ const mapXmlToProgramRepresentation = (
     const startTimeStr = getChildElementText(
       progElement,
       "PublishedStartTime",
-      tvaNamespace,
+      tvaNamespace, // tvaNamespace will be undefined
     );
     const durationStr = getChildElementText(
       progElement,
       "PublishedDuration",
-      tvaNamespace,
+      tvaNamespace, // tvaNamespace will be undefined
     );
     if (startTimeStr) {
       startTimeEpoch = new Date(startTimeStr).getTime();
@@ -195,15 +222,150 @@ const mapXmlToProgramRepresentation = (
     return null; // Or handle as an ongoing program if context allows
   }
 
-  const parentalRatings = parseParentalRatings(basicDescription, tvaNamespace);
-  const cpsIndex = getChildElementText(
-    progElement,
-    "InstanceMetadataId",
-    cridNamespace,
-  ); // Re-check if this is the correct mapping for CPSIndex
+  const parentalRatings = parseParentalRatings(basicDescription, tvaNamespace); // tvaNamespace will be undefined
+
+  // CPSIndex is expected as a direct child of ProgramInformation, using wildcard namespace
+  // as per reference client (DVBi_ns for <CPSIndex>).
+  const cpsIndex = getChildElementText(progElement, "CPSIndex", undefined);
 
   // bilingual, channelImage, channelStreamUrl are not typically part of ProgramInformation XML
   // and would be part of ChannelRepresentation or derived differently.
+
+  // --- Start: New field parsing for Task C.3 ---
+  let genre: string | undefined;
+  let mediaImage: MediaRepresentation | undefined;
+  let credits: CreditItem[] | undefined;
+  let keywords: KeywordItem[] | undefined;
+  let programAccessibilityAttributes: AccessibilityAttributes | undefined;
+
+  if (basicDescription) {
+    // Genre
+    const genreEl = getChildElement(basicDescription, "Genre", tvaNamespace);
+    if (genreEl) {
+      genre = genreEl.getAttribute("href") || undefined;
+      // TODO: Handle textual genre: getLocalizedTexts(genreEl, "Name", tvaNamespace)
+    }
+
+    // Keywords
+    const keywordElements = getChildElements(
+      basicDescription,
+      "Keyword",
+      tvaNamespace,
+    );
+    if (keywordElements.length > 0) {
+      keywords = keywordElements
+        .map((kwEl) => ({
+          type: kwEl.getAttribute("type") || undefined,
+          value: kwEl.textContent?.trim() || "",
+        }))
+        .filter((kw) => kw.value);
+      if (keywords.length === 0) keywords = undefined;
+    }
+
+    // CreditsList
+    const creditsListEl = getChildElement(
+      basicDescription,
+      "CreditsList",
+      tvaNamespace,
+    );
+    if (creditsListEl) {
+      const creditElements = getChildElements(
+        creditsListEl,
+        "CreditsItem",
+        tvaNamespace,
+      );
+      if (creditElements.length > 0) {
+        credits = creditElements
+          .map((credEl) => {
+            const creditItem: CreditItem = {};
+            const roleEl = getChildElement(credEl, "Role", tvaNamespace);
+            if (roleEl) {
+              creditItem.role =
+                roleEl.getAttribute("href") || roleEl.textContent?.trim();
+            }
+
+            // PersonName or OrganizationName (choice)
+            const personNameEl = getChildElement(
+              credEl,
+              "PersonName",
+              tvaNamespace,
+            );
+            if (personNameEl) {
+              // PersonName itself can have GivenName, FamilyName, etc. or be simple text.
+              // For simplicity, taking full text content.
+              const nameText = personNameEl.textContent?.trim();
+              if (nameText)
+                creditItem.personName = {
+                  lang: elementLanguage(personNameEl),
+                  text: nameText,
+                };
+            } else {
+              const orgNameEl = getChildElement(
+                credEl,
+                "OrganizationName",
+                tvaNamespace,
+              );
+              if (orgNameEl) {
+                const nameText = orgNameEl.textContent?.trim();
+                if (nameText)
+                  creditItem.personName = {
+                    lang: elementLanguage(orgNameEl),
+                    text: nameText,
+                  }; // Using personName field for org too
+              }
+            }
+
+            const characterEl = getChildElement(
+              credEl,
+              "Character",
+              tvaNamespace,
+            );
+            if (characterEl && characterEl.textContent) {
+              creditItem.characterName = {
+                lang: elementLanguage(characterEl),
+                text: characterEl.textContent.trim(),
+              };
+            }
+            return creditItem;
+          })
+          .filter((cr) => Object.keys(cr).length > 0);
+        if (credits.length === 0) credits = undefined;
+      }
+    }
+  }
+
+  // RelatedMaterial for Program Image
+  const relatedMaterialElements = getChildElements(
+    progElement,
+    "RelatedMaterial",
+    tvaNamespace,
+  );
+  relatedMaterialElements.forEach((rmEl) => {
+    const howRelated = getChildValue(rmEl, "HowRelated", tvaNamespace, "href");
+    if (howRelated === TVA_Program_Image_HowRelated_href) {
+      const mediaLocatorEl = getChildElement(
+        rmEl,
+        "MediaLocator",
+        tvaNamespace,
+      );
+      if (mediaLocatorEl) {
+        mediaImage = getMedia(mediaLocatorEl) ?? undefined;
+      }
+    }
+  });
+
+  // Program-level AccessibilityAttributes
+  const accessibilityElement = getChildElement(
+    progElement,
+    "AccessibilityAttributes",
+    tvaNamespace,
+  );
+  if (accessibilityElement) {
+    programAccessibilityAttributes =
+      parseTVAAccessibilityAttributes(accessibilityElement);
+  }
+
+  // --- End: New field parsing ---
 
   return {
     id: programId,
@@ -213,6 +375,12 @@ const mapXmlToProgramRepresentation = (
     description,
     parentalRatings: parentalRatings.length > 0 ? parentalRatings : undefined,
     cpsIndex: cpsIndex || undefined,
+    // New fields added to return object
+    genre,
+    mediaImage,
+    credits,
+    keywords,
+    accessibilityAttributes: programAccessibilityAttributes,
     // bilingual: undefined, // Needs specific mapping if available
     // channelImage: undefined, // Belongs to channel
     // channelStreamUrl: undefined, // Belongs to service instance
@@ -228,14 +396,12 @@ export const parseProgramInfoXml = (xmlString: string): ParsedProgramInfo => {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlString, "application/xml");
 
-  // Define namespaces - these might need to be dynamically detected or confirmed
-  const tvaNamespace =
-    xmlDoc.documentElement.getAttribute("xmlns:tva") || "urn:tva:metadata:2019";
-  const cridNamespace =
-    xmlDoc.documentElement.getAttribute("xmlns:crid") || "urn:tva:mpeg7:2008"; // Example, verify actual CRID namespace
+  // Use undefined for namespaces to achieve wildcard matching
+  const tvaNamespace = undefined;
+  const cridNamespace = undefined;
 
   const programInfoElements = xmlDoc.getElementsByTagNameNS(
-    tvaNamespace,
+    tvaNamespace || WILDCARD_NS,
     "ProgramInformation",
   );
 
@@ -304,56 +470,79 @@ export const parseScheduleXml = (
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlString, "application/xml");
 
-  // Define namespaces - these might need to be dynamically detected or confirmed from the <Schedule> element
-  const scheduleElement =
-    xmlDoc.getElementsByTagName("Schedule")?.[0] || xmlDoc.documentElement;
-  const tvaNamespace =
-    scheduleElement.getAttribute("xmlns:tva") ||
-    xmlDoc.documentElement.getAttribute("xmlns:tva") ||
-    "urn:tva:metadata:2019";
-  const cridNamespace =
-    scheduleElement.getAttribute("xmlns:crid") ||
-    xmlDoc.documentElement.getAttribute("xmlns:crid") ||
-    "urn:tva:mpeg7:2008";
+  // Use undefined for namespaces to achieve wildcard matching
+  const tvaNamespace = undefined;
+  const cridNamespace = undefined;
 
   const scheduleEvents = xmlDoc.getElementsByTagNameNS(
-    tvaNamespace,
+    tvaNamespace || WILDCARD_NS,
     "ScheduleEvent",
   );
   const programs: ProgramRepresentation[] = [];
 
+  // --- Start: CRID Resolution Logic (Task C.5) ---
+  // 1. Build a map of all ProgramInformation elements by their programId
+  const programInfoMap = new Map<string, Element>();
+  const allProgramInfoElements = xmlDoc.getElementsByTagNameNS(
+    tvaNamespace || WILDCARD_NS,
+    "ProgramInformation",
+  );
+  for (let i = 0; i < allProgramInfoElements.length; i++) {
+    const piElement = allProgramInfoElements[i];
+    const programId = piElement.getAttribute("programId");
+    if (programId) {
+      programInfoMap.set(programId, piElement);
+    }
+  }
+  // --- End: CRID Resolution Logic ---
+
   for (let i = 0; i < scheduleEvents.length; i++) {
     const eventElement = scheduleEvents[i];
-    // A ScheduleEvent usually contains a Program element (CRID) or full ProgramInformation
-    // For simplicity, we assume ProgramInformation is embedded or the eventElement itself has enough info
-    // to be parsed by mapXmlToProgramRepresentation.
-    // A more robust solution might need to handle Program CRIDs and look them up in a ProgramInformationTable if present.
+    let programInfoSourceElement: Element | undefined | null = undefined;
 
     // Try to find an embedded ProgramInformation first
-    let programInfoSourceElement = eventElement.getElementsByTagNameNS(
-      tvaNamespace,
+    programInfoSourceElement = eventElement.getElementsByTagNameNS(
+      tvaNamespace || WILDCARD_NS,
       "ProgramInformation",
     )?.[0];
 
-    // If not found, the ScheduleEvent itself might contain the necessary <BasicDescription> etc.
-    // or it might just have a <Program> CRID reference.
-    // Our mapXmlToProgramRepresentation expects an element that *looks like* a ProgramInformation.
     if (!programInfoSourceElement) {
-      // If there's a <Program> element (CRID ref), we can't resolve it without a ProgramInformationTable here.
-      // So, we'll try to parse the ScheduleEvent itself if it directly contains BasicDescription.
-      // This is a simplification; real EPGs might require CRID resolution.
+      // If not embedded, try to find a <Program crid="..."> reference
+      const programCridRefElement = eventElement.getElementsByTagNameNS(
+        tvaNamespace || WILDCARD_NS, // Assuming <Program> is in TVA namespace, adjust if CRID has its own
+        "Program",
+      )?.[0];
+
+      if (programCridRefElement) {
+        const crid = programCridRefElement.getAttribute("crid");
+        if (crid) {
+          // Look up the CRID in our map (programId in ProgramInformation is the CRID)
+          programInfoSourceElement = programInfoMap.get(crid);
+          if (!programInfoSourceElement) {
+            // console.warn(`CRID ${crid} referenced in ScheduleEvent not found in ProgramInformationTable.`);
+          }
+        }
+      }
+    }
+
+    // If still no source element, check if the ScheduleEvent itself has BasicDescription
+    if (!programInfoSourceElement) {
       const basicDesc = eventElement.getElementsByTagNameNS(
-        tvaNamespace,
+        tvaNamespace || WILDCARD_NS,
         "BasicDescription",
       )?.[0];
       if (basicDesc) {
+        // Treat the ScheduleEvent itself as the source for program details
+        // This is for cases where ScheduleEvent directly contains program metadata
+        // instead of referencing a ProgramInformation element.
         programInfoSourceElement = eventElement;
       } else {
-        // console.warn("ScheduleEvent without embedded ProgramInformation or BasicDescription, and CRID resolution not implemented.", eventElement);
+        // console.warn("ScheduleEvent without embedded/referenced ProgramInformation or BasicDescription. Skipping.", eventElement);
         continue;
       }
     }
 
+    // If we have a valid source (either embedded, resolved via CRID, or the event itself)
     const program = mapXmlToProgramRepresentation(
       programInfoSourceElement,
       cridNamespace,
