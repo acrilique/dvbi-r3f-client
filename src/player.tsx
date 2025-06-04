@@ -71,9 +71,6 @@ export function Player() {
   const fetchAndProcessServiceList = useAppStore(
     (state) => state.fetchAndProcessServiceList,
   );
-  const channels = useAppStore((state) => state.channels);
-  const selectedChannelId = useAppStore((state) => state.selectedChannelId);
-  const selectChannel = useAppStore((state) => state.selectChannel);
   const isLoadingServiceList = useAppStore(
     (state) => state.isLoadingServiceList,
   );
@@ -215,73 +212,8 @@ export function Player() {
     };
   }, [setPlayerInstance]);
 
-  // --- Derived State ---
-  const currentChannel = channels.find((c) => c.id === selectedChannelId);
-
-  // Effect to update video source when currentChannel or playerInstance changes
-  useEffect(() => {
-    if (!playerInstance || !videoElementRef.current) {
-      return;
-    }
-
-    const serviceInstanceWithDash = currentChannel?.serviceInstances.find(
-      (si) => si.dashUrl,
-    );
-
-    if (serviceInstanceWithDash && serviceInstanceWithDash.dashUrl) {
-      // Valid DASH URL found for the current channel
-      try {
-        // Dash.js attachSource typically handles replacing the current source.
-        playerInstance.attachSource(serviceInstanceWithDash.dashUrl);
-        playerInstance.play(); // Explicitly play after attaching source
-      } catch (error) {
-        console.error("Error attaching source or playing:", error);
-      }
-    } else {
-      // No valid DASH URL for the current channel (or no channel selected initially)
-      // Reset player only if a source was previously attached.
-      let isSourceCurrentlyAttached = false;
-      if (playerInstance) {
-        try {
-          if (playerInstance.getSource()) {
-            isSourceCurrentlyAttached = true;
-          }
-        } catch (error) {
-          // Check if the error is the specific "source not attached" error
-          // Assuming MediaPlayer.errors.SOURCE_NOT_ATTACHED_ERROR is accessible
-          // If not, you might need to check error.code or error.message string
-          if (
-            typeof error === "string" &&
-            error === "SOURCE_NOT_ATTACHED_ERROR"
-          ) {
-            // This is expected if no source is attached.
-            isSourceCurrentlyAttached = false;
-          } else {
-            // Log other unexpected errors from getSource()
-            console.error("Error checking player source for reset:", error);
-            isSourceCurrentlyAttached = false; // Assume not attached on other errors too for safety
-          }
-        }
-      }
-
-      if (playerInstance && isSourceCurrentlyAttached) {
-        try {
-          playerInstance.reset();
-          // Re-attach the view (video element)
-          if (videoElementRef.current) {
-            playerInstance.attachView(videoElementRef.current);
-          } else {
-            console.error(
-              "Cannot attach player view: videoElementRef.current is null",
-            );
-            // This is a critical state, consider setting a global error
-          }
-        } catch (error) {
-          console.error("Error resetting player and attaching view:", error);
-        }
-      }
-    }
-  }, [currentChannel, playerInstance, channels]);
+  // // --- Derived State ---
+  // const currentChannel = channels.find((c) => c.id === selectedChannelId);
 
   // --- UI Event Handlers (Examples) ---
   const handleOpenEpg = useCallback(() => setIsEpgVisible(true), []);
@@ -381,7 +313,7 @@ export function Player() {
                   padding={20}
                   borderRadius={10}
                 >
-                  <Text fontSize={20} color="white">
+                  {/* <Text fontSize={20} color="white">
                     {currentChannel
                       ? `Playing: ${currentChannel.titles[0]?.text || currentChannel.id}`
                       : "No channel selected"}
@@ -390,7 +322,7 @@ export function Player() {
                     <Text fontSize={16} color="lightgray">
                       Provider: {currentChannel.provider}
                     </Text>
-                  )}
+                  )} */}
                   <Container flexDirection="row" gap={10} marginTop={10}>
                     <Container
                       onClick={handleOpenEpg}
@@ -413,13 +345,7 @@ export function Player() {
               </Container>
 
               {/* Right Panel: Channel List */}
-              <ChannelListView
-                opacity={opacity}
-                channels={channels}
-                selectedChannelId={selectedChannelId}
-                isLoadingServiceList={isLoadingServiceList}
-                onSelectChannel={selectChannel}
-              />
+              <ChannelListView opacity={opacity} />
             </Container>
 
             {/* Player Controls Overlay */}

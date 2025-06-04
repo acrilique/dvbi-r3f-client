@@ -2,20 +2,22 @@ import React from "react";
 import { Container, Text, Image } from "@react-three/uikit";
 import { ChannelRepresentation } from "../store/types";
 import { Signal, computed } from "@preact/signals-react";
+import { useAppStore } from "../store/store";
 
 interface ChannelListItemProps {
   opacity: Signal<number>;
   channel: ChannelRepresentation;
-  isSelected: boolean;
-  onSelectChannel: (channelId: string) => void;
 }
 
 const ChannelListItemComponent: React.FC<ChannelListItemProps> = ({
   opacity,
   channel,
-  isSelected,
-  onSelectChannel,
 }) => {
+  const selectedChannelId = useAppStore((state) => state.selectedChannelId);
+  const selectChannel = useAppStore((state) => state.selectChannel);
+
+  const isSelected = selectedChannelId === channel.id;
+
   const outerContainerOpacity = computed(() => {
     return opacity.value * (isSelected ? 0.7 : 0.5);
   });
@@ -42,7 +44,7 @@ const ChannelListItemComponent: React.FC<ChannelListItemProps> = ({
         backgroundOpacity: hoverOuterContainerOpacity,
       }}
       cursor="pointer"
-      onClick={() => onSelectChannel(channel.id)}
+      onClick={() => selectChannel(channel.id)}
       gap={10}
     >
       {channel.image?.mediaUri && (

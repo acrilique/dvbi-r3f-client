@@ -60,12 +60,12 @@ export interface AppActions {
   // Service List Actions
   fetchAndProcessServiceList: (newIdentifier?: string) => Promise<void>;
   setServiceListLoading: (isLoading: boolean) => void;
-  setChannels: (channels: ChannelRepresentation[]) => void;
   setServiceListInfo: (info: AppState["serviceListInfo"]) => void;
   discoverAvailableServiceLists: () => void;
 
   // Channel Actions
   selectChannel: (channelId: string) => void;
+  _updatePlayerSourceEffect: () => void; // Internal action for player source logic
 
   // Player Actions
   setPlayerInstance: (player: DashPlayerInstance) => void;
@@ -113,6 +113,51 @@ export interface AppActions {
 
 export const useAppStore = create<AppState & AppActions>((set, get) => ({
   ...initialState,
+
+  _updatePlayerSourceEffect: () => {
+    const { playerInstance, channels, selectedChannelId, globalError } = get();
+
+    if (!playerInstance) {
+      return;
+    }
+
+    const serviceInstanceWithDash = channels
+      .find((c) => c.id === selectedChannelId)
+      ?.serviceInstances.find((si) => si.dashUrl);
+
+    if (serviceInstanceWithDash && serviceInstanceWithDash.dashUrl) {
+      try {
+        playerInstance.attachSource(serviceInstanceWithDash.dashUrl);
+        playerInstance.play();
+        // Optionally, clear any "no DASH URL" error if it was previously set
+        if (
+          globalError ===
+          "No valid DASH URL found for the selected channel or no channel selected."
+        ) {
+          set({ globalError: null });
+        }
+      } catch (error) {
+        console.error("Error attaching source or playing in store:", error);
+        set({
+          globalError: `Player Error: ${error instanceof Error ? error.message : String(error)}`,
+        });
+      }
+    } else {
+      try {
+        playerInstance.pause();
+      } catch (error) {
+        console.error("Error pausing playerInstance in store:", error);
+        // Potentially set a specific error or just log
+      }
+      console.error(
+        "No valid DASH URL found for the selected channel or no channel selected (from store).",
+      );
+      set({
+        globalError:
+          "No valid DASH URL found for the selected channel or no channel selected.",
+      });
+    }
+  },
 
   // --- Service List Actions ---
   fetchAndProcessServiceList: async (newIdentifier?: string) => {
@@ -209,6 +254,9 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
 
       if (parsedData.services.length > 0) {
         get().selectChannel(parsedData.services[0].id);
+      } else {
+        set({ selectedChannelId: null });
+        get()._updatePlayerSourceEffect();
       }
     } catch (error: unknown) {
       console.error("Error fetching or parsing service list:", error);
@@ -224,7 +272,6 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
   },
   setServiceListLoading: (isLoading) =>
     set({ isLoadingServiceList: isLoading }),
-  setChannels: (channels) => set({ channels }),
   setServiceListInfo: (info) => set({ serviceListInfo: info }),
   discoverAvailableServiceLists: () => {
     const lists: AvailableServiceListEntry[] = [
@@ -249,6 +296,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
     set({ selectedChannelId: channelId });
     // Fetch Now/Next for the newly selected channel
     void get().fetchNowNextForChannel(channelId);
+    get()._updatePlayerSourceEffect();
     // Example: Fetch EPG for selected channel if not already loading/loaded
     // if (!get().isLoadingEpg[channelId] && !get().channels.find(c => c.id === channelId)?.schedulePrograms) {
     //   void get().fetchEpgForChannel(channelId, get().epgViewState.currentEpgDate);
@@ -392,6 +440,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
         // isMuted: false,
       });
     }
+    get()._updatePlayerSourceEffect();
   },
   setIsPlaying: (playing) => set({ isPlaying: playing }),
   setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),

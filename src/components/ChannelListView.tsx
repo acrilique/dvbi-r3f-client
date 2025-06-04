@@ -1,24 +1,18 @@
 import React from "react";
 import { Container, Text } from "@react-three/uikit"; // Image might not be needed here anymore
-import { ChannelRepresentation } from "../store/types";
 import { ChannelListItem } from "./ChannelListItem";
 import { Signal, computed } from "@preact/signals-react";
+import { useAppStore } from "../store/store";
 
 interface ChannelListViewProps {
   opacity: Signal<number>;
-  channels: ChannelRepresentation[];
-  selectedChannelId: string | null;
-  isLoadingServiceList: boolean;
-  onSelectChannel: (channelId: string) => void;
 }
 
 const ChannelListViewComponent: React.FC<ChannelListViewProps> = ({
   opacity,
-  channels,
-  selectedChannelId,
-  isLoadingServiceList,
-  onSelectChannel,
 }) => {
+  const channels = useAppStore((state) => state.channels);
+
   const containerOpacity = computed(() => {
     return opacity.value * 0.5;
   });
@@ -42,11 +36,9 @@ const ChannelListViewComponent: React.FC<ChannelListViewProps> = ({
             opacity={opacity}
             key={channel.id}
             channel={channel}
-            isSelected={selectedChannelId === channel.id}
-            onSelectChannel={onSelectChannel}
           />
         ))}
-        {channels.length === 0 && !isLoadingServiceList && (
+        {channels.length === 0 && (
           <Text color="gray" fontSize={16}>
             No channels available in this service list.
           </Text>
