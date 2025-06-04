@@ -26,6 +26,7 @@ const initialState: AppState = {
   //   currentEpgDate: new Date(new Date().setHours(0, 0, 0, 0)).getTime(),
   // },
   playerInstance: null,
+  activeSettingsPage: "none",
   languageSettings: {
     audioLanguage: "eng", // Default to English as per dvbi-mobile.js
     subtitleLanguage: "eng",
@@ -84,6 +85,15 @@ export interface AppActions {
   setEpgLoading: (channelId: string, isLoading: boolean) => void;
 
   // Settings Actions
+  setActiveSettingsPage: (
+    page:
+      | "none"
+      | "main"
+      | "language"
+      | "lowLatency"
+      | "parentalControls"
+      | "serviceListSelection",
+  ) => void;
   updateLanguageSetting: <K extends keyof LanguageSettings>(
     key: K,
     value: LanguageSettings[K],
@@ -519,6 +529,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
     })),
 
   // --- Settings Actions ---
+  setActiveSettingsPage: (page) => set({ activeSettingsPage: page }),
   updateLanguageSetting: (key, value) =>
     set((state) => ({
       languageSettings: { ...state.languageSettings, [key]: value },

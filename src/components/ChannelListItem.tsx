@@ -35,6 +35,7 @@ const ChannelListItemComponent: React.FC<ChannelListItemProps> = ({
       key={channel.id} // key is actually used by the parent map, but good to have it conceptually here
       flexDirection="row"
       alignItems="center"
+      height={50}
       padding={10}
       borderRadius={5}
       backgroundColor={isSelected ? "rgb(0,152,244)" : "rgb(80,80,80)"}

@@ -251,7 +251,6 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
       backgroundOpacity={outerContainerOpacity}
       borderRadius={10}
       gap={10}
-      zIndexOffset={10}
     >
       <PlayPauseButton
         backgroundOpacity={buttonBackgroundOpacity}

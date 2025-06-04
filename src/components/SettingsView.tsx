@@ -1,19 +1,9 @@
-import { useEffect } from "react";
-import { Container, Text } from "@react-three/uikit";
+import React, { useEffect } from "react";
+import { Container, Text, Input } from "@react-three/uikit";
 import { useAppStore } from "../store/store";
 import { AvailableServiceListEntry } from "../store/types";
 
-interface SettingsViewProps {
-  activePage: string | null;
-  onClose: () => void;
-  onNavigate: (page: string) => void;
-}
-
-export function SettingsView({
-  activePage,
-  onClose,
-  onNavigate,
-}: SettingsViewProps) {
+const SettingsViewComponent: React.FC = () => {
   const fetchAndProcessServiceList = useAppStore(
     (state) => state.fetchAndProcessServiceList,
   );
@@ -23,6 +13,14 @@ export function SettingsView({
   );
   const discoverAvailableServiceLists = useAppStore(
     (state) => state.discoverAvailableServiceLists,
+  );
+  const lowLatencySettings = useAppStore((state) => state.lowLatencySettings);
+  const updateLowLatencySetting = useAppStore(
+    (state) => state.updateLowLatencySetting,
+  );
+  const activePage = useAppStore((state) => state.activeSettingsPage);
+  const setActiveSettingsPage = useAppStore(
+    (state) => state.setActiveSettingsPage,
   );
 
   useEffect(() => {
@@ -44,7 +42,7 @@ export function SettingsView({
         Settings
       </Text>
       <Container
-        onClick={() => onNavigate("serviceListSelection")}
+        onClick={() => setActiveSettingsPage("serviceListSelection")}
         padding={10}
         borderRadius={5}
         backgroundColor="rgb(80,80,80)"
@@ -73,16 +71,17 @@ export function SettingsView({
         <Text color="gray">Parental Controls (TBD)</Text>
       </Container>
       <Container
+        onClick={() => setActiveSettingsPage("lowLatency")}
         padding={10}
         borderRadius={5}
         backgroundColor="rgb(80,80,80)"
-        cursor="not-allowed"
-        backgroundOpacity={0.5}
+        hover={{ backgroundColor: "rgb(100,100,100)" }}
+        cursor="pointer"
       >
-        <Text color="gray">Low Latency Settings (TBD)</Text>
+        <Text color="white">Low Latency Settings</Text>
       </Container>
       <Container
-        onClick={onClose}
+        onClick={() => setActiveSettingsPage("none")}
         padding={10}
         borderRadius={5}
         backgroundColor="rgb(120,0,0)"
@@ -91,6 +90,149 @@ export function SettingsView({
         marginTop={20}
       >
         <Text color="white">Close</Text>
+      </Container>
+    </Container>
+  );
+
+  const renderLowLatencySettingsPage = () => (
+    <Container
+      flexDirection="column"
+      gap={15}
+      padding={20}
+      borderRadius={10}
+      backgroundColor="rgb(40,40,40)"
+      backgroundOpacity={0.9}
+      width={400} // Give it a defined width
+    >
+      <Container
+        flexDirection="row"
+        justifyContent="space-between"
+        alignItems="center"
+        width="100%"
+      >
+        <Text fontSize={24} color="white">
+          Low Latency Settings
+        </Text>
+        <Container
+          onClick={() => setActiveSettingsPage("main")}
+          padding={8}
+          borderRadius={5}
+          backgroundColor="rgb(80,80,80)"
+          hover={{ backgroundColor: "rgb(100,100,100)" }}
+          cursor="pointer"
+        >
+          <Text color="white" fontSize={14}>
+            Back
+          </Text>
+        </Container>
+      </Container>
+
+      {/* Low Latency Mode Toggle */}
+      <Container
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Text color="white">Low latency mode:</Text>
+        <Container
+          onClick={() =>
+            updateLowLatencySetting(
+              "lowLatencyEnabled",
+              !lowLatencySettings.lowLatencyEnabled,
+            )
+          }
+          padding={8}
+          borderRadius={5}
+          backgroundColor={
+            lowLatencySettings.lowLatencyEnabled
+              ? "rgb(0,122,204)"
+              : "rgb(80,80,80)"
+          }
+          hover={{ backgroundColor: "rgb(100,100,100)" }}
+          cursor="pointer"
+        >
+          <Text color="white">
+            {lowLatencySettings.lowLatencyEnabled ? "Enabled" : "Disabled"}
+          </Text>
+        </Container>
+      </Container>
+
+      {/* Target Latency */}
+      <Container
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Text color="white" marginRight={10}>
+          Target latency (s):
+        </Text>
+        <Input
+          width={100}
+          padding={8}
+          borderRadius={5}
+          backgroundColor="rgb(60,60,60)"
+          color="white"
+          value={lowLatencySettings.liveDelay.toString()}
+          onValueChange={(value) => {
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+              updateLowLatencySetting("liveDelay", numValue);
+            }
+          }}
+        />
+      </Container>
+
+      {/* Minimum Drift */}
+      <Container
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Text color="white" marginRight={10}>
+          Minimum drift (s):
+        </Text>
+        <Input
+          width={100}
+          padding={8}
+          borderRadius={5}
+          backgroundColor="rgb(60,60,60)"
+          color="white"
+          value={lowLatencySettings.liveCatchUpMinDrift.toString()}
+          onValueChange={(value) => {
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+              updateLowLatencySetting("liveCatchUpMinDrift", numValue);
+            }
+          }}
+        />
+      </Container>
+
+      {/* Catch-up Playback Rate */}
+      <Container
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Text color="white" marginRight={10}>
+          Catch-up rate (%):
+        </Text>
+        <Input
+          width={100}
+          padding={8}
+          borderRadius={5}
+          backgroundColor="rgb(60,60,60)"
+          color="white"
+          value={(lowLatencySettings.liveCatchUpPlaybackRate * 100).toString()}
+          onValueChange={(value) => {
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+              updateLowLatencySetting(
+                "liveCatchUpPlaybackRate",
+                numValue / 100,
+              );
+            }
+          }}
+        />
       </Container>
     </Container>
   );
@@ -114,7 +256,7 @@ export function SettingsView({
           Select Service List
         </Text>
         <Container
-          onClick={() => onNavigate("main")}
+          onClick={() => setActiveSettingsPage("main")}
           padding={8}
           borderRadius={5}
           backgroundColor="rgb(80,80,80)"
@@ -139,7 +281,7 @@ export function SettingsView({
               key={listEntry.identifier}
               onClick={() => {
                 void fetchAndProcessServiceList(listEntry.identifier);
-                onClose(); // Close settings after selection
+                setActiveSettingsPage("none");
               }}
               padding={10}
               borderRadius={5}
@@ -186,7 +328,7 @@ export function SettingsView({
           {title}
         </Text>
         <Container
-          onClick={() => onNavigate("main")}
+          onClick={() => setActiveSettingsPage("main")}
           padding={8}
           borderRadius={5}
           backgroundColor="rgb(80,80,80)"
@@ -220,12 +362,16 @@ export function SettingsView({
       pageContent = renderPlaceholderPage("Parental Controls");
       break;
     case "lowLatency":
-      pageContent = renderPlaceholderPage("Low Latency Settings");
+      pageContent = renderLowLatencySettingsPage();
       break;
     case "main":
       pageContent = renderMainPage();
       break;
     default:
+  }
+
+  if (activePage === "none") {
+    return null;
   }
 
   return (
@@ -241,4 +387,6 @@ export function SettingsView({
       {pageContent}
     </Container>
   );
-}
+};
+
+export const SettingsView = React.memo(SettingsViewComponent);

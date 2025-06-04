@@ -26,6 +26,7 @@ const ChannelListViewComponent: React.FC<ChannelListViewProps> = ({
         borderRadius={10}
         padding={15}
         overflow="scroll"
+        maxHeight="70%"
         gap={10}
       >
         <Text fontSize={22} color="white" marginBottom={10}>

@@ -242,6 +242,14 @@ export interface AppState {
   // epgViewState: EpgViewState; // Removed: Will be local to EPG component
   playerInstance: DashPlayerInstance;
 
+  activeSettingsPage:
+    | "none"
+    | "main"
+    | "language"
+    | "lowLatency"
+    | "parentalControls"
+    | "serviceListSelection"; //TODO Extract these to a type so we avoid dups
+
   languageSettings: LanguageSettings;
   lowLatencySettings: LowLatencySettings;
   parentalSettings: ParentalSettings;
