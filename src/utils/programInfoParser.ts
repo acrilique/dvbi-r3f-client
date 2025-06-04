@@ -4,8 +4,8 @@ import {
   ParentalRating,
   CreditItem,
   KeywordItem,
-  AccessibilityAttributes, // This will be provided by xmlParserUtils if parseTVAAccessibilityAttributes is used
-  MediaRepresentation, // This will be provided by xmlParserUtils if getMedia is used
+  AccessibilityAttributes,
+  MediaRepresentation,
 } from "../store/types";
 import {
   getChildElements,
@@ -13,7 +13,7 @@ import {
   getChildValue,
   getMedia,
   parseTVAAccessibilityAttributes,
-  elementLanguage, // Used by getLocalizedTexts
+  elementLanguage,
 } from "../utils/xmlParserUtils";
 
 // --- Constants ---

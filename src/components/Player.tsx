@@ -1,7 +1,6 @@
 import {
   Fullscreen,
   Container,
-  Text,
   Video,
   DefaultProperties,
 } from "@react-three/uikit";

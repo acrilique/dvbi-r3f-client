@@ -18,9 +18,6 @@ import {
   getTexts,
   getMedia,
   parseTVAAccessibilityAttributes,
-  // Types that were part of the import block but are now covered by xmlParserUtils
-  // LocalizedString, MediaRepresentation, AccessibilityAttributes, AccessibilityAudioAttributes,
-  // AccessibilitySubtitleAttributes, AccessibilitySigning, AccessibilityAppAndPurpose
 } from "./xmlParserUtils";
 
 // Namespaces
