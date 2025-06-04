@@ -90,16 +90,6 @@ export function Player() {
 
   const timeoutIdRef = useRef<number | null>(null);
 
-  const [cursor, setCursor] = useState("default");
-
-  useEffect(() => {
-    document.body.style.cursor = cursor;
-
-    return () => {
-      document.body.style.cursor = "default";
-    };
-  }, [cursor]);
-
   // Non-modal ui visibility
   const [opacity, setOpacity] = useDampedSignal(0);
 
@@ -109,7 +99,8 @@ export function Player() {
 
   const handleMouseMove = useCallback(() => {
     setOpacity(1);
-    setCursor("default");
+    // eslint-disable-next-line react-compiler/react-compiler
+    document.body.style.cursor = "default";
 
     if (timeoutIdRef.current) {
       clearTimeout(timeoutIdRef.current);
@@ -142,10 +133,10 @@ export function Player() {
       // Set new timeout to hide UI only if video is actually playing
       timeoutIdRef.current = window.setTimeout(() => {
         setOpacity(0);
-        setCursor("none");
-      }, 2000);
+        document.body.style.cursor = "none";
+      }, 3000);
     }
-  }, [setOpacity, playerInstance, setCursor]);
+  }, [setOpacity, playerInstance]);
 
   // Effect to handle global mouse move for UI visibility
   useEffect(() => {
@@ -153,14 +144,14 @@ export function Player() {
 
     return () => {
       document.body.removeEventListener("mousemove", handleMouseMove);
-      setCursor("default");
+      document.body.style.cursor = "default";
       // Clearing the timeout is also important on unmount if it's active
       if (timeoutIdRef.current) {
         clearTimeout(timeoutIdRef.current);
         timeoutIdRef.current = null;
       }
     };
-  }, [handleMouseMove, setCursor]);
+  }, [handleMouseMove]);
 
   useEffect(() => {
     // Cleanup the timeout when the component unmounts
@@ -178,12 +169,6 @@ export function Player() {
   //   displayIndex: 0,
   //   currentEpgDate: new Date(new Date().setHours(0, 0, 0, 0)).getTime()
   // });
-
-  const [isStreamInfoVisible, setIsStreamInfoVisible] = useState(false);
-  const [isPlayerControlsVisible, setIsPlayerControlsVisible] = useState(true); // Default
-  const [activeTrackSelectionMenu, setActiveTrackSelectionMenu] = useState<
-    "audio" | "subtitle" | null
-  >(null);
 
   useEffect(() => {
     void fetchAndProcessServiceList();
@@ -302,7 +287,7 @@ export function Player() {
   const handleOpenEpg = useCallback(() => setIsEpgVisible(true), []);
   const handleCloseEpg = useCallback(() => setIsEpgVisible(false), []);
 
-  const handleOpenSettings = useCallback((event: ThreeEvent<MouseEvent>) => {
+  const handleOpenSettings = useCallback((_event: ThreeEvent<MouseEvent>) => {
     setActiveSettingsPage("main");
   }, []); // Assuming setActiveSettingsPage and setIsSettingsVisible are stable (from useState)
 
@@ -310,54 +295,8 @@ export function Player() {
     setActiveSettingsPage(null);
   }, []); // Assuming setIsSettingsVisible and setActiveSettingsPage are stable
 
-  const handleToggleStreamInfo = useCallback(
-    () => setIsStreamInfoVisible((prev) => !prev),
-    [],
-  );
-  const handleTogglePlayerControls = useCallback(
-    () => setIsPlayerControlsVisible((prev) => !prev),
-    [],
-  );
-
-  // --- PlayerControls Handlers ---
-  const handleOpenAudioTrackMenu = useCallback(() => {
-    setActiveTrackSelectionMenu("audio");
-    console.log("Open audio track menu - UI to be implemented");
-    // Future: Show a modal or panel with audio track options from playerInstance.getTracksFor('audio')
-  }, []);
-
-  const handleOpenSubtitleTrackMenu = useCallback(() => {
-    setActiveTrackSelectionMenu("subtitle");
-    console.log("Open subtitle track menu - UI to be implemented");
-    // Future: Show a modal or panel with subtitle track options from playerInstance.getTracksFor('text')
-  }, []);
-
-  const handleToggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      // Attempt to fullscreen the entire app container or a specific element
-      // For simplicity, let's assume we want to fullscreen the video element if available,
-      // or the document body as a fallback for the general UI.
-      const elementToFullscreen =
-        videoElementRef.current || document.documentElement;
-      elementToFullscreen.requestFullscreen().catch((err: Error) => {
-        console.error(
-          `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
-        );
-      });
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch((err: Error) => {
-          console.error(
-            `Error attempting to disable full-screen mode: ${err.message} (${err.name})`,
-          );
-        });
-      }
-    }
-    // TODO: Consider XR specific fullscreen if xrStore.enterVR() or similar is intended.
-    console.log("Toggle Fullscreen action triggered");
-  }, []);
-
   // Display loading or error state
+  // TODO replace this with a notification overlay to avoid unmount/remount
   if (isLoadingServiceList) {
     return (
       <Fullscreen backgroundColor="rgb(0,0,0)" backgroundOpacity={0.8}>
@@ -484,12 +423,7 @@ export function Player() {
             </Container>
 
             {/* Player Controls Overlay */}
-            <PlayerControls
-              opacity={opacity}
-              onOpenAudioTrackMenu={handleOpenAudioTrackMenu}
-              onOpenSubtitleTrackMenu={handleOpenSubtitleTrackMenu}
-              onToggleFullscreen={handleToggleFullscreen}
-            />
+            <PlayerControls opacity={opacity} />
           </DefaultProperties>
 
           {/* Settings Modal Overlay */}

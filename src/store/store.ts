@@ -299,8 +299,25 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
     };
     const onSeeked = () => set({ isSeeking: false });
     const onSeeking = () => set({ isSeeking: true });
-    const onVolumeChanged = (data: { muted: boolean; volume: number }) => {
-      set({ volume: data.volume, isMuted: data.muted });
+    const onVolumeChanged = () => {
+      const playerInstance = get().playerInstance;
+      if (
+        playerInstance &&
+        typeof playerInstance.isReady === "function" &&
+        playerInstance.isReady()
+      ) {
+        try {
+          const currentVolume = playerInstance.getVolume();
+          const currentMutedState = playerInstance.isMuted();
+
+          set({ volume: currentVolume, isMuted: currentMutedState });
+        } catch (error) {
+          console.error(
+            "Error getting volume/mute state from player in onVolumeChanged handler:",
+            error,
+          );
+        }
+      }
     };
 
     // Clean up listeners from the current player instance if it exists
@@ -355,16 +372,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
           MediaPlayer.events.PLAYBACK_VOLUME_CHANGED,
           onVolumeChanged,
         );
-
-        // Get current playing state
-        // let isCurrentlyPlaying = false; // Original logic removed
-        // try {
-        //   isCurrentlyPlaying = newPlayerInstance.isPaused() === false;
-        // } catch (error) {
-        //   console.error('Error checking player paused state:', error);
-        // }
-
-        set({ playerInstance: newPlayerInstance, isPlaying: false }); // Initialize isPlaying to false, actual state will be set by event handlers
+        set({ playerInstance: newPlayerInstance, isPlaying: false });
       } catch (error) {
         console.error("Error setting up event listeners for player:", error);
         set({
@@ -385,8 +393,8 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
       });
     }
   },
-  setIsPlaying: (playing) => set({ isPlaying: playing }), // Direct setters might still be useful for optimistic updates or manual control
-  setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }), // Clamp volume between 0 and 1
+  setIsPlaying: (playing) => set({ isPlaying: playing }),
+  setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),
   setIsMuted: (muted) => set({ isMuted: muted }),
   setDuration: (duration) => set({ duration }),
   setCurrentTime: (time) => set({ currentTime: time }),
@@ -414,7 +422,6 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
     if (playerInstance) {
       try {
         playerInstance.setVolume(clampedVolume);
-        playerInstance.setMute(clampedVolume === 0);
       } catch (error) {
         console.error("Error setting player volume:", error);
         set({
@@ -423,7 +430,6 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
       }
     }
     set({
-      volume: clampedVolume,
       isMuted: clampedVolume === 0 && newVolume === 0,
     }); // Update store state
   },

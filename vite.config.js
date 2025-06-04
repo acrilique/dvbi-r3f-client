@@ -6,10 +6,15 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
+const ReactCompilerConfig = { 
+    target: "19"    
+}
+
 export default defineConfig({
     "plugins": [
         react(),
-        basicSsl()
+        basicSsl(),
+        ["babel-plugin-react-compiler", ReactCompilerConfig],
     ],
     "resolve": {
         "dedupe": [
