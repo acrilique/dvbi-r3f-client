@@ -11,7 +11,7 @@ import {
   AudioWaveform,
 } from "@react-three/uikit-lucide";
 import { useAppStore } from "../store/store";
-import type { AppState } from "../store/types";
+import type { AppState, MediaTrack } from "../store/types";
 import { Signal, computed } from "@preact/signals-react";
 
 // Props for individual button components
@@ -140,40 +140,157 @@ const MuteToggleButtonComponent: React.FC<ControlButtonProps> = ({
 };
 const MuteToggleButton = React.memo(MuteToggleButtonComponent);
 
+interface TrackMenuProps {
+  tracks: MediaTrack[];
+  selectedTrackId: number | null;
+  onSelectTrack: (id: number) => void;
+  onClose: () => void;
+  title: string;
+}
+
+const TrackMenu: React.FC<TrackMenuProps> = ({
+  tracks,
+  selectedTrackId,
+  onSelectTrack,
+  onClose,
+  title,
+}) => (
+  <Container
+    positionType="absolute"
+    positionBottom={60} // Position above the button
+    flexDirection="column"
+    backgroundColor="rgba(40, 40, 40, 0.95)"
+    borderRadius={10}
+    padding={15}
+    gap={10}
+    width={250}
+  >
+    <Container
+      flexDirection="row"
+      justifyContent="space-between"
+      alignItems="center"
+    >
+      <Text fontSize={20} color="white">
+        {title}
+      </Text>
+      <Button
+        onClick={onClose}
+        padding={5}
+        borderRadius={5}
+        backgroundColor="rgb(80,80,80)"
+        hover={{ backgroundColor: "rgb(100,100,100)" }}
+      >
+        <Text>X</Text>
+      </Button>
+    </Container>
+    <Container flexDirection="column" gap={5}>
+      {tracks.map((track) => (
+        <Button
+          key={track.id}
+          onClick={() => onSelectTrack(track.id)}
+          padding={10}
+          borderRadius={5}
+          backgroundColor={
+            selectedTrackId === track.id ? "rgb(0,122,204)" : "rgb(60,60,60)"
+          }
+          hover={{ backgroundColor: "rgb(100,100,100)" }}
+        >
+          <Text color="white">
+            {track.label} ({track.lang})
+          </Text>
+        </Button>
+      ))}
+      {tracks.length === 0 && <Text color="gray">No tracks available.</Text>}
+    </Container>
+  </Container>
+);
+
 // Memoized Audio Track Button
 const AudioTrackButtonComponent: React.FC<ControlButtonProps> = ({
   backgroundOpacity,
   iconOpacity,
-}) => (
-  <Button
-    // onClick={onClick}
-    padding={10}
-    borderRadius={5}
-    backgroundColor="rgb(255,255,255)"
-    backgroundOpacity={backgroundOpacity}
-    hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
-  >
-    <AudioWaveform opacity={iconOpacity} color="white" width={24} height={24} />
-  </Button>
-);
+}) => {
+  const isVisible = useAppStore((state) => state.isAudioTrackMenuVisible);
+  const tracks = useAppStore((state) => state.availableAudioTracks);
+  const selectedId = useAppStore((state) => state.selectedAudioTrackId);
+  const { selectAudioTrack, toggleAudioTrackMenu } = useAppStore(
+    (state) => state,
+  );
+
+  return (
+    <Container>
+      {isVisible && (
+        <TrackMenu
+          title="Select Audio Track"
+          tracks={tracks}
+          selectedTrackId={selectedId}
+          onSelectTrack={selectAudioTrack}
+          onClose={toggleAudioTrackMenu}
+        />
+      )}
+      <Button
+        onClick={toggleAudioTrackMenu}
+        padding={10}
+        borderRadius={5}
+        backgroundColor="rgb(255,255,255)"
+        backgroundOpacity={backgroundOpacity}
+        hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
+      >
+        <AudioWaveform
+          onClick={toggleAudioTrackMenu}
+          opacity={iconOpacity}
+          color="white"
+          width={24}
+          height={24}
+        />
+      </Button>
+    </Container>
+  );
+};
 const AudioTrackButton = React.memo(AudioTrackButtonComponent);
 
 // Memoized Subtitle Track Button
 const SubtitleTrackButtonComponent: React.FC<ControlButtonProps> = ({
   backgroundOpacity,
   iconOpacity,
-}) => (
-  <Button
-    // onClick={}
-    padding={10}
-    borderRadius={5}
-    backgroundColor="rgb(255,255,255)"
-    backgroundOpacity={backgroundOpacity}
-    hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
-  >
-    <Captions opacity={iconOpacity} color="white" width={24} height={24} />
-  </Button>
-);
+}) => {
+  const isVisible = useAppStore((state) => state.isSubtitleTrackMenuVisible);
+  const tracks = useAppStore((state) => state.availableSubtitleTracks);
+  const selectedId = useAppStore((state) => state.selectedSubtitleTrackId);
+  const { selectSubtitleTrack, toggleSubtitleTrackMenu } = useAppStore(
+    (state) => state,
+  );
+
+  return (
+    <Container>
+      {isVisible && (
+        <TrackMenu
+          title="Select Subtitle"
+          tracks={tracks}
+          selectedTrackId={selectedId}
+          onSelectTrack={selectSubtitleTrack}
+          onClose={toggleSubtitleTrackMenu}
+        />
+      )}
+      <Button
+        onClick={toggleSubtitleTrackMenu}
+        padding={10}
+        borderRadius={5}
+        backgroundColor="rgb(255,255,255)"
+        backgroundOpacity={backgroundOpacity}
+        hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
+      >
+        <Captions
+          onClick={toggleSubtitleTrackMenu}
+          opacity={iconOpacity}
+          color="white"
+          width={24}
+          height={24}
+        />
+      </Button>
+    </Container>
+  );
+};
 const SubtitleTrackButton = React.memo(SubtitleTrackButtonComponent);
 
 // Memoized Fullscreen Toggle Button

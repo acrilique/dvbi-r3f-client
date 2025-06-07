@@ -14,6 +14,10 @@ const SettingsViewComponent: React.FC = () => {
   const discoverAvailableServiceLists = useAppStore(
     (state) => state.discoverAvailableServiceLists,
   );
+  const languageSettings = useAppStore((state) => state.languageSettings);
+  const updateLanguageSetting = useAppStore(
+    (state) => state.updateLanguageSetting,
+  );
   const lowLatencySettings = useAppStore((state) => state.lowLatencySettings);
   const updateLowLatencySetting = useAppStore(
     (state) => state.updateLowLatencySetting,
@@ -53,13 +57,14 @@ const SettingsViewComponent: React.FC = () => {
       </Container>
       {/* Placeholder buttons for other settings */}
       <Container
+        onClick={() => setActiveSettingsPage("language")}
         padding={10}
         borderRadius={5}
         backgroundColor="rgb(80,80,80)"
-        cursor="not-allowed"
-        backgroundOpacity={0.5}
+        hover={{ backgroundColor: "rgb(100,100,100)" }}
+        cursor="pointer"
       >
-        <Text color="gray">Language Settings (TBD)</Text>
+        <Text color="white">Language Settings</Text>
       </Container>
       <Container
         padding={10}
@@ -91,6 +96,86 @@ const SettingsViewComponent: React.FC = () => {
       >
         <Text color="white">Close</Text>
       </Container>
+    </Container>
+  );
+
+  // the plan here is to allow the selection of a default language from
+  // a set of supported langs using ISO 639-1 codes.
+  // Options: audioLanguage, subtitleLanguage, uiLanguage, accessibleAudio
+  const renderLanguageSettingsPage = () => (
+    <Container
+      flexDirection="column"
+      gap={15}
+      padding={20}
+      borderRadius={10}
+      backgroundColor="rgb(40,40,40)"
+      backgroundOpacity={0.9}
+    >
+      <Container
+        flexDirection="row"
+        justifyContent="space-between"
+        alignItems="center"
+        width="100%"
+      >
+        <Text fontSize={24} color="white">
+          Language Settings
+        </Text>
+        <Container
+          onClick={() => setActiveSettingsPage("main")}
+          padding={8}
+          borderRadius={5}
+          backgroundColor="rgb(80,80,80)"
+          hover={{ backgroundColor: "rgb(100,100,100)" }}
+          cursor="pointer"
+        >
+          <Text color="white" fontSize={14}>
+            Back
+          </Text>
+        </Container>
+      </Container>
+
+      {/* Audio Language */}
+      <Container
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Text color="white">Default Audio Language:</Text>
+        <Input
+          width={200}
+          padding={8}
+          borderRadius={5}
+          backgroundColor="rgb(60,60,60)"
+          color="white"
+          value={languageSettings.audioLanguage || ""}
+          onValueChange={(value) =>
+            updateLanguageSetting("audioLanguage", value)
+          }
+        />
+      </Container>
+
+      {/* Subtitle Language */}
+      <Container
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Text color="white">Default Subtitle Language:</Text>
+        <Input
+          width={200}
+          padding={8}
+          borderRadius={5}
+          backgroundColor="rgb(60,60,60)"
+          color="white"
+          value={languageSettings.subtitleLanguage || ""}
+          onValueChange={(value) =>
+            updateLanguageSetting("subtitleLanguage", value)
+          }
+        />
+      </Container>
+
+      {/* UI Language */}
+      {/* Accessible Audio */}
     </Container>
   );
 
@@ -356,7 +441,7 @@ const SettingsViewComponent: React.FC = () => {
       pageContent = renderServiceListSelectionPage();
       break;
     case "language":
-      pageContent = renderPlaceholderPage("Language Settings");
+      pageContent = renderLanguageSettingsPage();
       break;
     case "parentalControls":
       pageContent = renderPlaceholderPage("Parental Controls");

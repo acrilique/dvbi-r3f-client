@@ -244,6 +244,13 @@ export interface AvailableServiceListEntry {
 // --- Player ---
 export type DashPlayerInstance = MediaPlayerClass | null;
 
+export interface MediaTrack {
+  id: number;
+  lang: string;
+  label: string;
+  type: "audio" | "subtitle";
+}
+
 // --- Zustand Store Shape ---
 export interface AppState {
   // Processed Data
@@ -280,6 +287,14 @@ export interface AppState {
   duration: number; // in seconds
   currentTime: number; // in seconds
   isSeeking: boolean;
+
+  // Track selection
+  availableAudioTracks: MediaTrack[];
+  availableSubtitleTracks: MediaTrack[];
+  selectedAudioTrackId: number | null;
+  selectedSubtitleTrackId: number | null;
+  isAudioTrackMenuVisible: boolean;
+  isSubtitleTrackMenuVisible: boolean;
 
   // Loading/Error States
   isLoadingServiceList: boolean;

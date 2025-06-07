@@ -5,6 +5,7 @@ import {
   DashPlayerInstance,
   LanguageSettings,
   LowLatencySettings,
+  MediaTrack,
   ParentalSettings,
   ParsedServiceList,
 } from "./types";
@@ -22,9 +23,9 @@ const initialState: AppState = {
   playerInstance: null,
   activeSettingsPage: "none",
   languageSettings: {
-    audioLanguage: "eng", // Default to English as per dvbi-mobile.js
-    subtitleLanguage: "eng",
-    uiLanguage: "en", // Default UI language
+    audioLanguage: "en",
+    subtitleLanguage: "en",
+    uiLanguage: "en",
     accessibleAudio: false,
   },
   lowLatencySettings: {
@@ -51,6 +52,12 @@ const initialState: AppState = {
   isSeeking: false,
   opacityTargetRef: { current: 1 },
   uiTimeoutRef: { current: null },
+  availableAudioTracks: [],
+  availableSubtitleTracks: [],
+  selectedAudioTrackId: null,
+  selectedSubtitleTrackId: null,
+  isAudioTrackMenuVisible: false,
+  isSubtitleTrackMenuVisible: false,
 };
 
 export interface AppActions {
@@ -66,6 +73,12 @@ export interface AppActions {
 
   // Player Actions
   setPlayerInstance: (player: DashPlayerInstance) => void;
+  setAvailableAudioTracks: (tracks: MediaTrack[]) => void;
+  setAvailableSubtitleTracks: (tracks: MediaTrack[]) => void;
+  selectAudioTrack: (trackId: number) => void;
+  selectSubtitleTrack: (trackId: number) => void;
+  toggleAudioTrackMenu: () => void;
+  toggleSubtitleTrackMenu: () => void;
   setIsPlaying: (playing: boolean) => void;
   setVolume: (volume: number) => void;
   setIsMuted: (muted: boolean) => void;
@@ -402,16 +415,71 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
         try {
           if (player.isReady()) {
             set({ duration: player.duration() });
+
+            // Populate audio tracks
+            const audioTracks = player.getTracksFor("audio");
+            const formattedAudioTracks: MediaTrack[] = audioTracks.map(
+              (track, index) => ({
+                id: index,
+                lang: track.lang || "und",
+                label: track.labels[0]?.text || track.lang || "und",
+                type: "audio",
+              }),
+            );
+            set({ availableAudioTracks: formattedAudioTracks });
+
+            // Set initial selected audio track
+            const currentAudioTrack = player.getCurrentTrackFor("audio");
+            if (currentAudioTrack) {
+              const matchingTrack = formattedAudioTracks.find(
+                (t) => t.lang === currentAudioTrack.lang,
+              );
+              if (matchingTrack) {
+                set({ selectedAudioTrackId: matchingTrack.id });
+              }
+            }
           }
         } catch (error) {
           console.error(
-            "Error getting player duration on stream initialization:",
+            "Error during stream initialization processing:",
             error,
           );
-          // Don't set global error here as this is not critical
         }
       }
     };
+
+    const onTextTracksAdded = (e: {
+      tracks: {
+        index: number;
+        lang: string;
+        label: string;
+        kind: string;
+      }[];
+    }) => {
+      const player = get().playerInstance;
+      if (player && e.tracks) {
+        const formattedSubtitleTracks: MediaTrack[] = e.tracks.map((track) => ({
+          id: track.index,
+          lang: track.lang,
+          label: track.label || track.lang,
+          type: "subtitle",
+        }));
+        set({ availableSubtitleTracks: formattedSubtitleTracks });
+
+        // Set initial selected subtitle track
+        const currentSubtitleTrackIndex =
+          player.getCurrentTrackFor("text")?.index ?? 0;
+        if (currentSubtitleTrackIndex > -1) {
+          const matchingTrack = formattedSubtitleTracks.find(
+            (t) => t.id === currentSubtitleTrackIndex,
+          );
+          if (matchingTrack) {
+            set({ selectedSubtitleTrackId: matchingTrack.id });
+          }
+        }
+      }
+    };
+
     const onSeeked = () => set({ isSeeking: false });
     const onSeeking = () => set({ isSeeking: true });
     const onVolumeChanged = () => {
@@ -461,6 +529,10 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
           MediaPlayer.events.PLAYBACK_VOLUME_CHANGED,
           onVolumeChanged,
         );
+        currentPlayerInstance.off(
+          MediaPlayer.events.TEXT_TRACKS_ADDED,
+          onTextTracksAdded,
+        );
       } catch (error) {
         console.error("Error removing event listeners from player:", error);
         // Don't set global error here as this is cleanup
@@ -487,6 +559,20 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
           MediaPlayer.events.PLAYBACK_VOLUME_CHANGED,
           onVolumeChanged,
         );
+        newPlayerInstance.on(
+          MediaPlayer.events.TEXT_TRACKS_ADDED,
+          onTextTracksAdded,
+        );
+
+        // Setup initial language settings
+        const { languageSettings } = get();
+        newPlayerInstance.setInitialMediaSettingsFor("audio", {
+          lang: languageSettings.audioLanguage,
+        });
+        newPlayerInstance.setInitialMediaSettingsFor("video", {
+          lang: languageSettings.subtitleLanguage,
+        });
+
         set({ playerInstance: newPlayerInstance, isPlaying: false });
       } catch (error) {
         console.error("Error setting up event listeners for player:", error);
@@ -509,6 +595,66 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
     }
     get()._updatePlayerSourceEffect();
   },
+  setAvailableAudioTracks: (tracks) => set({ availableAudioTracks: tracks }),
+  setAvailableSubtitleTracks: (tracks) =>
+    set({ availableSubtitleTracks: tracks }),
+  selectAudioTrack: (trackId) => {
+    const { playerInstance } = get();
+    if (playerInstance) {
+      playerInstance.setInitialMediaSettingsFor("audio", {
+        lang:
+          get().availableAudioTracks.find((t) => t.id === trackId)?.lang || "",
+      });
+      // For immediate effect on current stream:
+      const audioTracks = playerInstance.getTracksFor("audio");
+      const trackToSelect = audioTracks.find(
+        (t) =>
+          t.lang ===
+          get().availableAudioTracks.find((tr) => tr.id === trackId)?.lang,
+      );
+      if (trackToSelect) {
+        playerInstance.setCurrentTrack(trackToSelect);
+      }
+    }
+    set({ selectedAudioTrackId: trackId, isAudioTrackMenuVisible: false });
+  },
+  selectSubtitleTrack: (trackId) => {
+    const { playerInstance } = get();
+    if (playerInstance) {
+      playerInstance.setInitialMediaSettingsFor("video", {
+        lang:
+          get().availableSubtitleTracks.find((t) => t.id === trackId)?.lang ||
+          "",
+      });
+      // For immediate effect on current stream:
+      playerInstance.enableText(trackId !== -1); // -1 can be a "None" option
+      if (trackId !== -1) {
+        const subtitleTracks = playerInstance.getTracksFor("text");
+        const trackToSelect = subtitleTracks.find(
+          (t) =>
+            t.lang ===
+            get().availableSubtitleTracks.find((tr) => tr.id === trackId)?.lang,
+        );
+        if (trackToSelect && trackToSelect.index) {
+          playerInstance.setTextTrack(trackToSelect.index);
+        }
+      }
+    }
+    set({
+      selectedSubtitleTrackId: trackId,
+      isSubtitleTrackMenuVisible: false,
+    });
+  },
+  toggleAudioTrackMenu: () =>
+    set((state) => ({
+      isAudioTrackMenuVisible: !state.isAudioTrackMenuVisible,
+      isSubtitleTrackMenuVisible: false, // Close other menu
+    })),
+  toggleSubtitleTrackMenu: () =>
+    set((state) => ({
+      isSubtitleTrackMenuVisible: !state.isSubtitleTrackMenuVisible,
+      isAudioTrackMenuVisible: false, // Close other menu
+    })),
   setIsPlaying: (playing) => set({ isPlaying: playing }),
   setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),
   setIsMuted: (muted) => set({ isMuted: muted }),
@@ -606,10 +752,20 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
 
   // --- Settings Actions ---
   setActiveSettingsPage: (page) => set({ activeSettingsPage: page }),
-  updateLanguageSetting: (key, value) =>
+  updateLanguageSetting: (key, value) => {
     set((state) => ({
       languageSettings: { ...state.languageSettings, [key]: value },
-    })),
+    }));
+    // Also apply to the player instance if it exists
+    const { playerInstance } = get();
+    if (playerInstance) {
+      if (key === "audioLanguage" && typeof value === "string") {
+        playerInstance.setInitialMediaSettingsFor("audio", { lang: value });
+      } else if (key === "subtitleLanguage" && typeof value === "string") {
+        playerInstance.setInitialMediaSettingsFor("video", { lang: value });
+      }
+    }
+  },
   updateLowLatencySetting: (key, value) =>
     set((state) => ({
       lowLatencySettings: { ...state.lowLatencySettings, [key]: value },
