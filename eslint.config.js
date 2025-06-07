@@ -5,6 +5,7 @@ import reactCompiler from "eslint-plugin-react-compiler";
 import * as reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import eslintConfigPrettier from "eslint-config-prettier/flat";
 
 export default [
   {
@@ -21,6 +22,7 @@ export default [
       reactCompiler.configs.recommended,
       reactHooks.configs.recommended,
       eslintPluginPrettierRecommended,
+      eslintConfigPrettier,
     ],
     languageOptions: {
       ecmaVersion: 2020,
