@@ -285,4 +285,7 @@ export interface AppState {
   isLoadingServiceList: boolean;
   isLoadingEpg: Record<string, boolean>; // Key: channelId
   globalError: string | null;
+
+  opacityTargetRef: { current: number };
+  uiTimeoutRef: { current: number | null };
 }

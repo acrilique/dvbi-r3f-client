@@ -19,10 +19,6 @@ const initialState: AppState = {
   channels: [],
   selectedChannelId: null,
   serviceListInfo: null,
-  // epgViewState: { // Removed
-  //   displayIndex: 0,
-  //   currentEpgDate: new Date(new Date().setHours(0, 0, 0, 0)).getTime(),
-  // },
   playerInstance: null,
   activeSettingsPage: "none",
   languageSettings: {
@@ -53,6 +49,8 @@ const initialState: AppState = {
   duration: 0,
   currentTime: 0,
   isSeeking: false,
+  opacityTargetRef: { current: 1 },
+  uiTimeoutRef: { current: null },
 };
 
 export interface AppActions {
@@ -117,6 +115,8 @@ export interface AppActions {
     date: number,
     windowHours?: number,
   ) => Promise<void>;
+
+  showUi: () => void;
 }
 
 export const useAppStore = create<AppState & AppActions>((set, get) => ({
@@ -309,10 +309,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
     // Fetch Now/Next for the newly selected channel
     void get().fetchNowNextForChannel(channelId);
     get()._updatePlayerSourceEffect();
-    // Example: Fetch EPG for selected channel if not already loading/loaded
-    // if (!get().isLoadingEpg[channelId] && !get().channels.find(c => c.id === channelId)?.schedulePrograms) {
-    //   void get().fetchEpgForChannel(channelId, get().epgViewState.currentEpgDate);
-    // }
+    get().showUi();
   },
 
   // --- Player Actions ---
@@ -335,10 +332,68 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
         }
       }
       console.error("Dash.js Error in store:", errorMessage, e);
-      set({ globalError: `Player Error: ${errorMessage}` }); // Example: set a global error
+      set({ globalError: `Player Error: ${errorMessage}` });
     };
-    const onPlaying = () => set({ isPlaying: true });
-    const onPaused = () => set({ isPlaying: false });
+
+    const onPlaying = () => {
+      set({ isPlaying: true });
+      const { uiTimeoutRef, opacityTargetRef, playerInstance } = get();
+
+      // Only hide UI if player is ready and not paused (which should be the case if 'onPlaying' is triggered)
+      // and video has enough data. This check might be redundant if onPlaying guarantees play state.
+      let blockUIOverlay = true; // Assume UI should be blocked (visible)
+      if (playerInstance) {
+        try {
+          const isPlayerReady = playerInstance.isReady();
+          // isPaused might throw if called at a wrong time, though less likely here
+          const isPlayerPaused = playerInstance.isPaused();
+
+          // Check video element's readyState via playerInstance if possible, or assume ready if playing
+          // This part is tricky without direct video element access here.
+          // For now, if it's playing, we assume it's okay to start fadeout.
+          if (isPlayerReady && !isPlayerPaused) {
+            blockUIOverlay = false;
+          }
+        } catch (e) {
+          console.warn(
+            "Error determining player state in onPlaying for UI overlay:",
+            e,
+          );
+        }
+      }
+
+      if (!blockUIOverlay) {
+        if (uiTimeoutRef.current) {
+          clearTimeout(uiTimeoutRef.current);
+        }
+        uiTimeoutRef.current = window.setTimeout(() => {
+          opacityTargetRef.current = 0;
+          document.body.style.cursor = "none";
+          // No set({}) needed here as useFrame in component will pick up opacityTargetRef.current
+        }, 3000);
+      } else {
+        // If UI should be blocked (e.g. player not fully ready), ensure it's visible
+        if (uiTimeoutRef.current) {
+          clearTimeout(uiTimeoutRef.current);
+          uiTimeoutRef.current = null;
+        }
+        opacityTargetRef.current = 1;
+        document.body.style.cursor = "default";
+      }
+    };
+
+    const onPaused = () => {
+      set({ isPlaying: false });
+      const { uiTimeoutRef, opacityTargetRef } = get();
+      if (uiTimeoutRef.current) {
+        clearTimeout(uiTimeoutRef.current);
+        uiTimeoutRef.current = null;
+      }
+      opacityTargetRef.current = 1;
+      document.body.style.cursor = "default";
+      // No set({}) needed here
+    };
+
     const onTimeUpdate = (data: { time: number }) =>
       set({ currentTime: data.time });
     const onStreamInitialized = () => {
@@ -524,6 +579,25 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
     }
   },
 
+  // --- UI Actions ---
+  showUi: () => {
+    const { opacityTargetRef, uiTimeoutRef, playerInstance, isPlaying } = get();
+    opacityTargetRef.current = 1;
+    document.body.style.cursor = "default";
+
+    if (uiTimeoutRef.current) {
+      clearTimeout(uiTimeoutRef.current);
+      uiTimeoutRef.current = null;
+    }
+
+    if (playerInstance && isPlaying) {
+      uiTimeoutRef.current = window.setTimeout(() => {
+        opacityTargetRef.current = 0;
+        document.body.style.cursor = "none";
+      }, 3000);
+    }
+  },
+
   // --- EPG Actions ---
   setEpgLoading: (channelId, isLoading) =>
     set((state) => ({
@@ -695,24 +769,3 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
     }
   },
 }));
-
-// Example of how to persist parts of the store to localStorage (optional)
-// import { persist, createJSONStorage } from 'zustand/middleware';
-// export const useAppStore = create(
-//   persist<AppState & AppActions>(
-//     (set, get) => ({
-//       // ... store definition ...
-//     }),
-//     {
-//       name: 'dvbi-r3f-app-storage', // name of the item in the storage (must be unique)
-//       storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
-//       partialize: (state) => ({
-//         languageSettings: state.languageSettings,
-//         lowLatencySettings: state.lowLatencySettings,
-//         parentalSettings: state.parentalSettings,
-//         // Potentially last used service list URL
-//         // lastServiceListUrl: state.serviceListInfo?.sourceUrl
-//       }),
-//     }
-//   )
-// );
