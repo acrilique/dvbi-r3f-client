@@ -5,7 +5,7 @@ import { Canvas } from "@react-three/fiber";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Canvas>
+    <Canvas gl={{ localClippingEnabled: true }}>
       <Player />
     </Canvas>
   </StrictMode>,
