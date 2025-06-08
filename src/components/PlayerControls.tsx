@@ -213,8 +213,9 @@ const AudioTrackButtonComponent: React.FC<ControlButtonProps> = ({
   const isVisible = useAppStore((state) => state.isAudioTrackMenuVisible);
   const tracks = useAppStore((state) => state.availableAudioTracks);
   const selectedId = useAppStore((state) => state.selectedAudioTrackId);
-  const { selectAudioTrack, toggleAudioTrackMenu } = useAppStore(
-    (state) => state,
+  const selectAudioTrack = useAppStore((state) => state.selectAudioTrack);
+  const toggleAudioTrackMenu = useAppStore(
+    (state) => state.toggleAudioTrackMenu,
   );
 
   return (
@@ -257,8 +258,9 @@ const SubtitleTrackButtonComponent: React.FC<ControlButtonProps> = ({
   const isVisible = useAppStore((state) => state.isSubtitleTrackMenuVisible);
   const tracks = useAppStore((state) => state.availableSubtitleTracks);
   const selectedId = useAppStore((state) => state.selectedSubtitleTrackId);
-  const { selectSubtitleTrack, toggleSubtitleTrackMenu } = useAppStore(
-    (state) => state,
+  const selectSubtitleTrack = useAppStore((state) => state.selectSubtitleTrack);
+  const toggleSubtitleTrackMenu = useAppStore(
+    (state) => state.toggleSubtitleTrackMenu,
   );
 
   return (
