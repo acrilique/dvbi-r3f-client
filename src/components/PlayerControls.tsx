@@ -17,11 +17,13 @@ import { Signal, computed } from "@preact/signals-react";
 // Props for individual button components
 interface ControlButtonProps {
   backgroundOpacity: Signal<number>;
+  hoverBackgroundOpacity: Signal<number>;
   iconOpacity: Signal<number>;
 }
 
 const PlayPauseButtonComponent: React.FC<ControlButtonProps> = ({
   backgroundOpacity,
+  hoverBackgroundOpacity,
   iconOpacity,
 }) => {
   const isPlaying = useAppStore((state: AppState) => state.isPlaying);
@@ -52,7 +54,7 @@ const PlayPauseButtonComponent: React.FC<ControlButtonProps> = ({
       borderRadius={5}
       backgroundColor="rgb(255,255,255)"
       backgroundOpacity={backgroundOpacity}
-      hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
+      hover={{ backgroundOpacity: hoverBackgroundOpacity }}
     >
       {isPlaying ? (
         <Pause opacity={iconOpacity} color="white" width={24} height={24} />
@@ -82,6 +84,7 @@ const TimeDisplay = React.memo(TimeDisplayComponent);
 
 const MuteToggleButtonComponent: React.FC<ControlButtonProps> = ({
   backgroundOpacity,
+  hoverBackgroundOpacity,
   iconOpacity,
 }) => {
   const playerInstance = useAppStore((state: AppState) => state.playerInstance);
@@ -116,7 +119,7 @@ const MuteToggleButtonComponent: React.FC<ControlButtonProps> = ({
       borderRadius={5}
       backgroundColor="rgb(255,255,255)"
       backgroundOpacity={backgroundOpacity}
-      hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
+      hover={{ backgroundOpacity: hoverBackgroundOpacity }}
     >
       {visiblyMuted ? (
         <VolumeX
@@ -199,6 +202,7 @@ const TrackMenu: React.FC<TrackMenuProps> = ({
 // Memoized Audio Track Button
 const AudioTrackButtonComponent: React.FC<ControlButtonProps> = ({
   backgroundOpacity,
+  hoverBackgroundOpacity,
   iconOpacity,
 }) => {
   const isVisible = useAppStore((state) => state.isAudioTrackMenuVisible);
@@ -226,7 +230,7 @@ const AudioTrackButtonComponent: React.FC<ControlButtonProps> = ({
         borderRadius={5}
         backgroundColor="rgb(255,255,255)"
         backgroundOpacity={backgroundOpacity}
-        hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
+        hover={{ backgroundOpacity: hoverBackgroundOpacity }}
       >
         <AudioWaveform
           onClick={toggleAudioTrackMenu}
@@ -244,6 +248,7 @@ const AudioTrackButton = React.memo(AudioTrackButtonComponent);
 // Memoized Subtitle Track Button
 const SubtitleTrackButtonComponent: React.FC<ControlButtonProps> = ({
   backgroundOpacity,
+  hoverBackgroundOpacity,
   iconOpacity,
 }) => {
   const isVisible = useAppStore((state) => state.isSubtitleTrackMenuVisible);
@@ -271,7 +276,7 @@ const SubtitleTrackButtonComponent: React.FC<ControlButtonProps> = ({
         borderRadius={5}
         backgroundColor="rgb(255,255,255)"
         backgroundOpacity={backgroundOpacity}
-        hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
+        hover={{ backgroundOpacity: hoverBackgroundOpacity }}
       >
         <Captions
           onClick={toggleSubtitleTrackMenu}
@@ -289,6 +294,7 @@ const SubtitleTrackButton = React.memo(SubtitleTrackButtonComponent);
 // Memoized Fullscreen Toggle Button
 const FullscreenToggleButtonComponent: React.FC<ControlButtonProps> = ({
   backgroundOpacity,
+  hoverBackgroundOpacity,
   iconOpacity,
 }) => {
   const canvasRef = useAppStore((state) => state.canvasRef);
@@ -319,7 +325,7 @@ const FullscreenToggleButtonComponent: React.FC<ControlButtonProps> = ({
       borderRadius={5}
       backgroundColor="rgb(255,255,255)"
       backgroundOpacity={backgroundOpacity}
-      hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
+      hover={{ backgroundOpacity: hoverBackgroundOpacity }}
     >
       <Maximize
         onClick={handleFullscreenToggle}
@@ -342,6 +348,7 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
 }) => {
   const outerContainerOpacity = computed(() => opacity.value * 0.6);
   const buttonBackgroundOpacity = computed(() => opacity.value * 0.2);
+  const hoverButtonBackgroundOpacity = computed(() => opacity.value * 0.3);
   const iconsOpacity = computed(() => opacity.value * 1.0);
 
   return (
@@ -361,6 +368,7 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
     >
       <PlayPauseButton
         backgroundOpacity={buttonBackgroundOpacity}
+        hoverBackgroundOpacity={hoverButtonBackgroundOpacity}
         iconOpacity={iconsOpacity}
       />
 
@@ -368,21 +376,25 @@ const PlayerControlsComponent: React.FC<PlayerControlsProps> = ({
 
       <MuteToggleButton
         backgroundOpacity={buttonBackgroundOpacity}
+        hoverBackgroundOpacity={hoverButtonBackgroundOpacity}
         iconOpacity={iconsOpacity}
       />
 
       <AudioTrackButton
         backgroundOpacity={buttonBackgroundOpacity}
+        hoverBackgroundOpacity={hoverButtonBackgroundOpacity}
         iconOpacity={iconsOpacity}
       />
 
       <SubtitleTrackButton
         backgroundOpacity={buttonBackgroundOpacity}
+        hoverBackgroundOpacity={hoverButtonBackgroundOpacity}
         iconOpacity={iconsOpacity}
       />
 
       <FullscreenToggleButton
         backgroundOpacity={buttonBackgroundOpacity}
+        hoverBackgroundOpacity={hoverButtonBackgroundOpacity}
         iconOpacity={iconsOpacity}
       />
     </Container>

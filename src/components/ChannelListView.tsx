@@ -14,14 +14,14 @@ const ChannelListViewComponent: React.FC<ChannelListViewProps> = ({
   const channels = useAppStore((state) => state.channels);
 
   const containerOpacity = computed(() => {
-    return opacity.value * 0.5;
+    return opacity.value * 0.6;
   });
 
   return (
     <Container flexGrow={1} flexDirection="column" height="100%">
       <Container
         flexDirection="column"
-        backgroundColor="rgb(30,30,30)"
+        backgroundColor="rgb(0, 0, 0)"
         backgroundOpacity={containerOpacity}
         borderRadius={10}
         padding={15}
