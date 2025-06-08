@@ -38,18 +38,6 @@ const DVBi_LinkedApplication_CS =
 const DVBi_App_In_Parallel = `${DVBi_LinkedApplication_CS}:1.1`; // "urn:dvb:metadata:cs:LinkedApplicationCS:2019:1.1"
 const DVBi_App_Controlling_Media = `${DVBi_LinkedApplication_CS}:1.2`; // "urn:dvb:metadata:cs:LinkedApplicationCS:2019:1.2"
 
-// --- CS Maps (from CSmap.js) ---
-// All CS Maps, CSMapEntry, datatypeIs, mapValues, and specific CS functions (SubtitleCarriageCS, AudioCodingCS, etc.)
-// have been moved to xmlParserUtils.ts
-
-// --- XML Parsing Helper Functions ---
-// All generic XML parsing helpers (getChildElements, getChildElement, getChildValue, getChildValues,
-// elementLanguage, getText, getTexts, getMedia) have been moved to xmlParserUtils.ts
-
-// --- Accessibility Parsing Functions ---
-// All accessibility parsing functions (parseTVAAudioAttributesType, accessibilityApplication,
-// parseTVAAccessibilityAttributes) have been moved to xmlParserUtils.ts
-
 function parseContentGuideSource(
   src: Element | null,
 ): ContentGuideSourceInfo | null {
@@ -161,11 +149,6 @@ export function parseServiceListXml(
     ) {
       errorDetails = parserErrorElement[0].childNodes[0].nodeValue.trim();
     }
-    console.error("[ServiceListParser] Parser Error Details:", errorDetails);
-    console.error(
-      "[ServiceListParser] XML string (first 1000 chars):",
-      xmlString.substring(0, 1000),
-    );
     return { services: [], regions: [], lcnTables: [], image: undefined }; // Return empty result
   }
 
