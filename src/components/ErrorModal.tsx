@@ -18,7 +18,7 @@ const ErrorModalComponent: React.FC = () => {
       justifyContent="center"
       backgroundColor="rgb(0,0,0)"
       backgroundOpacity={0.8}
-      zIndexOffset={20}
+      renderOrder={4}
     >
       <Container
         alignSelf="center"

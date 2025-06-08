@@ -463,7 +463,7 @@ const SettingsViewComponent: React.FC = () => {
       justifyContent="center"
       backgroundColor="rgb(0,0,0)"
       backgroundOpacity={0.8}
-      zIndexOffset={10}
+      renderOrder={3}
     >
       {pageContent}
     </Container>

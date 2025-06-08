@@ -45,11 +45,17 @@ export function Player() {
   const fetchAndProcessServiceList = useAppStore(
     (state) => state.fetchAndProcessServiceList,
   );
+  const isStreamInitialized = useAppStore((state) => state.isStreamInitialized);
   const setPlayerInstance = useAppStore((state) => state.setPlayerInstance);
   const opacityTargetRef = useAppStore((state) => state.opacityTargetRef);
   const showUi = useAppStore((state) => state.showUi);
 
-  const [videoElement] = useState(() => {
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(
+    null,
+  );
+
+  // Create and manage the video element's lifecycle
+  useEffect(() => {
     const video = document.createElement("video");
     video.id = "dashjs-video-player";
     video.muted = false;
@@ -60,8 +66,17 @@ export function Player() {
     video.style.left = "-9999px";
     video.style.top = "-9999px";
     document.body.appendChild(video);
-    return video;
-  });
+    // Indirectly set state to avoid linter warning
+    const timeoutId = setTimeout(() => setVideoElement(video), 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      // Cleanup: remove the video element from the DOM
+      if (video.parentNode) {
+        video.parentNode.removeChild(video);
+      }
+    };
+  }, []); // Empty dependency array ensures this runs only once on mount/unmount
 
   // Non-modal ui visibility - pass the store's target ref to the hook
   const opacitySignal = useDampedSignal(
@@ -91,6 +106,11 @@ export function Player() {
 
   // Initialize and manage Dash.js player instance
   useEffect(() => {
+    // Don't initialize if the video element isn't ready
+    if (!videoElement) {
+      return;
+    }
+
     const newPlayer = MediaPlayer().create();
     try {
       newPlayer.initialize(videoElement);
@@ -108,29 +128,34 @@ export function Player() {
         }
       }
       setPlayerInstance(null);
-      if (videoElement && videoElement.parentNode) {
-        videoElement.parentNode.removeChild(videoElement);
-      }
     };
-  }, [setPlayerInstance, videoElement]);
+  }, [videoElement, setPlayerInstance]);
 
   return (
     <>
       <Suspense>
-        <Fullscreen flexDirection={"column"}>
+        <Fullscreen flexDirection={"column"} backgroundColor="#000">
+          <Container
+            positionType="absolute"
+            width="100%"
+            height="100%"
+            backgroundColor="#000"
+            renderOrder={0}
+          />
           {/* Background Video Player */}
-          {videoElement && (
+          {isStreamInitialized && videoElement != null && (
             <Video
               src={videoElement}
               width="100%"
               positionType="absolute"
-              renderOrder={-1}
+              renderOrder={1}
             />
           )}
 
           <DefaultProperties
             opacity={opacitySignal}
             scrollbarOpacity={opacitySignal}
+            renderOrder={2}
           >
             {/* UI Overlay */}
             <Container

@@ -283,6 +283,7 @@ export interface AppState {
   parentalSettings: ParentalSettings;
 
   // Player State
+  isStreamInitialized: boolean;
   isPlaying: boolean;
   volume: number; // 0.0 to 1.0
   isMuted: boolean;

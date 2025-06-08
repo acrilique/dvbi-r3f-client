@@ -66,6 +66,7 @@ const initialState: AppState = {
   globalError: null,
   availableServiceLists: [],
   // Player State initial values
+  isStreamInitialized: false,
   isPlaying: false,
   volume: 1, // Default volume to max
   isMuted: false,
@@ -349,7 +350,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
 
   // --- Channel Actions ---
   selectChannel: (channelId) => {
-    set({ selectedChannelId: channelId });
+    set({ selectedChannelId: channelId, isStreamInitialized: false });
     localStorage.setItem("dvbi_selected_channel_id", channelId);
     // Fetch Now/Next for the newly selected channel
     void get().fetchNowNextForChannel(channelId);
@@ -446,7 +447,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
       if (player) {
         try {
           if (player.isReady()) {
-            set({ duration: player.duration() });
+            set({ duration: player.duration(), isStreamInitialized: true });
 
             // Populate audio tracks
             const audioTracks = player.getTracksFor("audio");
@@ -628,6 +629,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
       set({
         playerInstance: null,
         isPlaying: false,
+        isStreamInitialized: false,
         currentTime: 0,
         duration: 0,
         isSeeking: false,
@@ -636,7 +638,6 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
         // isMuted: false,
       });
     }
-    get()._updatePlayerSourceEffect();
   },
   setAvailableAudioTracks: (tracks) => set({ availableAudioTracks: tracks }),
   setAvailableSubtitleTracks: (tracks) =>
