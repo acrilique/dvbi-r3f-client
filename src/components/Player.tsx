@@ -128,7 +128,10 @@ export function Player() {
             />
           )}
 
-          <DefaultProperties opacity={opacitySignal}>
+          <DefaultProperties
+            opacity={opacitySignal}
+            scrollbarOpacity={opacitySignal}
+          >
             {/* UI Overlay */}
             <Container
               positionType="absolute"
