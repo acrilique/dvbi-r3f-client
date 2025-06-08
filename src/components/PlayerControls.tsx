@@ -158,32 +158,19 @@ const TrackMenu: React.FC<TrackMenuProps> = ({
   <Container
     positionType="absolute"
     positionBottom={60} // Position above the button
+    positionLeft={-100} // Center horizontally
     flexDirection="column"
-    backgroundColor="rgba(40, 40, 40, 0.95)"
+    backgroundColor="rgba(40, 40, 40)"
+    backgroundOpacity={0.95}
     borderRadius={10}
     padding={15}
     gap={10}
     width={250}
   >
-    <Container
-      flexDirection="row"
-      justifyContent="space-between"
-      alignItems="center"
-    >
-      <Text fontSize={20} color="white">
-        {title}
-      </Text>
-      <Button
-        onClick={onClose}
-        padding={5}
-        borderRadius={5}
-        backgroundColor="rgb(80,80,80)"
-        hover={{ backgroundColor: "rgb(100,100,100)" }}
-      >
-        <Text>X</Text>
-      </Button>
-    </Container>
-    <Container flexDirection="column" gap={5}>
+    <Text fontSize={20} color="white" textAlign={"center"}>
+      {title}
+    </Text>
+    <Container flexDirection="column" gap={5} alignItems={"center"}>
       {tracks.map((track) => (
         <Button
           key={track.id}
@@ -200,7 +187,11 @@ const TrackMenu: React.FC<TrackMenuProps> = ({
           </Text>
         </Button>
       ))}
-      {tracks.length === 0 && <Text color="gray">No tracks available.</Text>}
+      {tracks.length === 0 && (
+        <Text height={24} color="gray">
+          No tracks available.
+        </Text>
+      )}
     </Container>
   </Container>
 );
@@ -327,7 +318,6 @@ const FullscreenToggleButtonComponent: React.FC<ControlButtonProps> = ({
         });
       }
     }
-    console.log("Toggle Fullscreen action triggered");
   }, [playerInstance]);
 
   return (
