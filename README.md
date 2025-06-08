@@ -7,8 +7,10 @@ Some of the libraries being used might be unknown to you, here's a brief overvie
 - [@react-three/uikit](https://github.com/pmndrs/uikit): A UI toolkit with CSS-like styling (uses Yoga for layout) which allows building performant 3D user interfaces in React Three Fiber. 
 - [zustand](https://github.com/pmndrs/zustand): A quite nice state management solution for React. I tried to keep all the shared state in a zustand store, and only use React state for local component state, avoiding unnecessary re-renders.
 - [@preact/signals](https://github.com/preactjs/signals): Performant state management library, can be used used with `@react-three/uikit` for updating UI props without triggering re-renders.
+- [vite](https://vitejs.dev/): A modern build tool that provides a fast development environment and builds for production. It supports hot module replacement (HMR) and is highly configurable.
+- [React Compiler](https://react.dev/learn/react-compiler): Build-time only tool that automatically optimizes React apps.
 
-Apart from the above, I've also set up eslint and prettier, along with the necessary plugins for React, TypeScript... It's a bit complicated but it's working. 
+Apart from the above, I've also set up eslint as a linter and prettier as a code formatter, along with the necessary/convenient eslint plugins for React, TypeScript...
 
 # Getting Started
 
