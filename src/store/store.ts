@@ -81,6 +81,7 @@ const initialState: AppState = {
   selectedSubtitleTrackId: null,
   isAudioTrackMenuVisible: false,
   isSubtitleTrackMenuVisible: false,
+  canvasRef: null,
 };
 
 export interface AppActions {
@@ -153,6 +154,9 @@ export interface AppActions {
   ) => Promise<void>;
 
   showUi: () => void;
+
+  // Fullscreen Actions
+  setCanvasRef: (ref: React.RefObject<HTMLCanvasElement>) => void;
 }
 
 export const useAppStore = create<AppState & AppActions>((set, get) => ({
@@ -787,6 +791,9 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
       }, 3000);
     }
   },
+
+  // --- Fullscreen Actions ---
+  setCanvasRef: (ref) => set({ canvasRef: ref }),
 
   // --- EPG Actions ---
   setEpgLoading: (channelId, isLoading) =>

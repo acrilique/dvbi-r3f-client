@@ -291,45 +291,43 @@ const FullscreenToggleButtonComponent: React.FC<ControlButtonProps> = ({
   backgroundOpacity,
   iconOpacity,
 }) => {
-  const playerInstance = useAppStore((state: AppState) => state.playerInstance);
+  const canvasRef = useAppStore((state) => state.canvasRef);
 
-  const handleToggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      if (playerInstance) {
-        try {
-          const videoElement = playerInstance.getVideoElement();
-          if (videoElement) {
-            videoElement.requestFullscreen().catch((err: Error) => {
-              console.error(
-                `Error attempting to enable full-screen mode: ${err.message} (${err.name})`,
-              );
-            });
-          }
-        } catch (error) {
-          console.error("Error getting video element:", error);
-        }
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch((err: Error) => {
-          console.error(
-            `Error attempting to disable full-screen mode: ${err.message} (${err.name})`,
-          );
-        });
-      }
+  const handleFullscreenToggle = useCallback(() => {
+    if (!canvasRef?.current) {
+      return;
     }
-  }, [playerInstance]);
+    if (document.fullscreenElement !== canvasRef.current) {
+      canvasRef.current
+        .requestFullscreen()
+        .catch((err) =>
+          console.error("Error attempting to enable full-screen mode:", err),
+        );
+    } else {
+      document
+        .exitFullscreen()
+        .catch((err) =>
+          console.error("Error attempting to exit full-screen mode:", err),
+        );
+    }
+  }, [canvasRef]);
 
   return (
     <Button
-      onClick={handleToggleFullscreen}
+      onClick={handleFullscreenToggle}
       padding={10}
       borderRadius={5}
       backgroundColor="rgb(255,255,255)"
       backgroundOpacity={backgroundOpacity}
       hover={{ backgroundColor: "rgb(255,255,255)", backgroundOpacity: 0.3 }}
     >
-      <Maximize opacity={iconOpacity} color="white" width={24} height={24} />
+      <Maximize
+        onClick={handleFullscreenToggle}
+        opacity={iconOpacity}
+        color="white"
+        width={24}
+        height={24}
+      />
     </Button>
   );
 };

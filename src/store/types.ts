@@ -306,4 +306,7 @@ export interface AppState {
 
   opacityTargetRef: { current: number };
   uiTimeoutRef: { current: number | null };
+
+  // CanvasRef for fullscreen
+  canvasRef: React.RefObject<HTMLCanvasElement> | null;
 }

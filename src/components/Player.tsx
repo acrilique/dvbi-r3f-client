@@ -144,12 +144,15 @@ export function Player() {
           />
           {/* Background Video Player */}
           {isStreamInitialized && videoElement != null && (
-            <Video
-              src={videoElement}
-              width="100%"
+            <Container
               positionType="absolute"
-              renderOrder={1}
-            />
+              width="100%"
+              height="100%"
+              flexDirection={"row"}
+              alignItems={"center"}
+            >
+              <Video src={videoElement} width="100%" renderOrder={1} />
+            </Container>
           )}
 
           <DefaultProperties
