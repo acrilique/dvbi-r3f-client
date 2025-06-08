@@ -16,26 +16,46 @@ import {
   parseScheduleXml,
 } from "../utils/programInfoParser";
 
+// Helper to safely parse JSON from localStorage
+function loadFromLocalStorage<T>(key: string, defaultValue: T): T {
+  const storedValue = localStorage.getItem(key);
+  if (storedValue) {
+    try {
+      return JSON.parse(storedValue) as T;
+    } catch (error) {
+      console.warn(`Error parsing localStorage key "${key}":`, error);
+      return defaultValue;
+    }
+  }
+  return defaultValue;
+}
+
 const initialState: AppState = {
   channels: [],
-  selectedChannelId: null,
+  selectedChannelId: localStorage.getItem("dvbi_selected_channel_id") || null,
   serviceListInfo: null,
   playerInstance: null,
   activeSettingsPage: "none",
-  languageSettings: {
-    audioLanguage: "en",
-    subtitleLanguage: "en",
-    uiLanguage: "en",
-    accessibleAudio: false,
-  },
-  lowLatencySettings: {
-    liveDelay: 3,
-    liveCatchupMaxDrift: 0.05,
-    liveCatchupPlaybackRate: {
-      min: -0.5,
-      max: 0.5,
+  languageSettings: loadFromLocalStorage<LanguageSettings>(
+    "dvbi_language_settings",
+    {
+      audioLanguage: "en",
+      subtitleLanguage: "en",
+      uiLanguage: "en",
+      accessibleAudio: false,
     },
-  },
+  ),
+  lowLatencySettings: loadFromLocalStorage<LowLatencySettings>(
+    "dvbi_low_latency_settings",
+    {
+      liveDelay: 3,
+      liveCatchupMaxDrift: 0.1,
+      liveCatchupPlaybackRate: {
+        min: -0.5,
+        max: 0.5,
+      },
+    },
+  ),
   parentalSettings: {
     parentalEnabled: false,
     minimumAge: 0,
@@ -169,10 +189,10 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
       try {
         playerInstance.pause();
       } catch (error) {
-        console.error("Error pausing playerInstance in store:", error);
+        console.warn("Error pausing playerInstance in store:", error);
         // Potentially set a specific error or just log
       }
-      console.error(
+      console.warn(
         "No valid DASH URL found for the selected channel or no channel selected (from store).",
       );
       set({
@@ -244,7 +264,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
         baseUrl += "/";
       }
       // Remove leading slash from localPath if baseUrl already ends with one, to prevent double slashes
-      if (localPath.startsWith("/") && baseUrl.endsWith("/")) {
+      if (localPath.startsWith("/")) {
         localPath = localPath.substring(1);
       }
       finalFetchUrl = `${baseUrl}${localPath}`;
@@ -280,7 +300,16 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
       });
 
       if (parsedData.services.length > 0) {
-        get().selectChannel(parsedData.services[0].id);
+        const lastSelectedChannelId = get().selectedChannelId;
+        const channelExists = parsedData.services.some(
+          (s) => s.id === lastSelectedChannelId,
+        );
+
+        if (lastSelectedChannelId && channelExists) {
+          get().selectChannel(lastSelectedChannelId);
+        } else {
+          get().selectChannel(parsedData.services[0].id);
+        }
       } else {
         set({ selectedChannelId: null });
         get()._updatePlayerSourceEffect();
@@ -321,6 +350,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
   // --- Channel Actions ---
   selectChannel: (channelId) => {
     set({ selectedChannelId: channelId });
+    localStorage.setItem("dvbi_selected_channel_id", channelId);
     // Fetch Now/Next for the newly selected channel
     void get().fetchNowNextForChannel(channelId);
     get()._updatePlayerSourceEffect();
@@ -766,9 +796,10 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
   // --- Settings Actions ---
   setActiveSettingsPage: (page) => set({ activeSettingsPage: page }),
   updateLanguageSetting: (key, value) => {
-    set((state) => ({
-      languageSettings: { ...state.languageSettings, [key]: value },
-    }));
+    const newSettings = { ...get().languageSettings, [key]: value };
+    set({ languageSettings: newSettings });
+    localStorage.setItem("dvbi_language_settings", JSON.stringify(newSettings));
+
     // Also apply to the player instance if it exists
     const { playerInstance } = get();
     if (playerInstance) {
@@ -784,6 +815,10 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
     const updatedSettings = { ...get().lowLatencySettings, [key]: value };
 
     set({ lowLatencySettings: updatedSettings });
+    localStorage.setItem(
+      "dvbi_low_latency_settings",
+      JSON.stringify(updatedSettings),
+    );
 
     if (playerInstance) {
       if (key === "liveDelay") {
@@ -956,7 +991,7 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
         isLoadingEpg: { ...state.isLoadingEpg, [channelId]: false },
       }));
     } catch (error: unknown) {
-      console.error(`Error fetching schedule for channel ${channelId}:`, error);
+      console.warn(`Error fetching schedule for channel ${channelId}:`, error);
       const message =
         error instanceof Error
           ? error.message
