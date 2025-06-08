@@ -212,36 +212,6 @@ const SettingsViewComponent: React.FC = () => {
         </Container>
       </Container>
 
-      {/* Low Latency Mode Toggle */}
-      <Container
-        flexDirection="row"
-        alignItems="center"
-        justifyContent="space-between"
-      >
-        <Text color="white">Low latency mode:</Text>
-        <Container
-          onClick={() =>
-            updateLowLatencySetting(
-              "lowLatencyEnabled",
-              !lowLatencySettings.lowLatencyEnabled,
-            )
-          }
-          padding={8}
-          borderRadius={5}
-          backgroundColor={
-            lowLatencySettings.lowLatencyEnabled
-              ? "rgb(0,122,204)"
-              : "rgb(80,80,80)"
-          }
-          hover={{ backgroundColor: "rgb(100,100,100)" }}
-          cursor="pointer"
-        >
-          <Text color="white">
-            {lowLatencySettings.lowLatencyEnabled ? "Enabled" : "Disabled"}
-          </Text>
-        </Container>
-      </Container>
-
       {/* Target Latency */}
       <Container
         flexDirection="row"
@@ -267,14 +237,14 @@ const SettingsViewComponent: React.FC = () => {
         />
       </Container>
 
-      {/* Minimum Drift */}
+      {/* Maximum Drift */}
       <Container
         flexDirection="row"
         alignItems="center"
         justifyContent="space-between"
       >
         <Text color="white" marginRight={10}>
-          Minimum drift (s):
+          Maximum drift (s):
         </Text>
         <Input
           width={100}
@@ -282,11 +252,11 @@ const SettingsViewComponent: React.FC = () => {
           borderRadius={5}
           backgroundColor="rgb(60,60,60)"
           color="white"
-          value={lowLatencySettings.liveCatchUpMinDrift.toString()}
+          value={lowLatencySettings.liveCatchupMaxDrift.toString()}
           onValueChange={(value) => {
             const numValue = parseFloat(value);
             if (!isNaN(numValue)) {
-              updateLowLatencySetting("liveCatchUpMinDrift", numValue);
+              updateLowLatencySetting("liveCatchupMaxDrift", numValue);
             }
           }}
         />
@@ -299,7 +269,7 @@ const SettingsViewComponent: React.FC = () => {
         justifyContent="space-between"
       >
         <Text color="white" marginRight={10}>
-          Catch-up rate (%):
+          Min catch-up rate:
         </Text>
         <Input
           width={100}
@@ -307,14 +277,40 @@ const SettingsViewComponent: React.FC = () => {
           borderRadius={5}
           backgroundColor="rgb(60,60,60)"
           color="white"
-          value={(lowLatencySettings.liveCatchUpPlaybackRate * 100).toString()}
+          value={lowLatencySettings.liveCatchupPlaybackRate.min.toString()}
           onValueChange={(value) => {
             const numValue = parseFloat(value);
             if (!isNaN(numValue)) {
-              updateLowLatencySetting(
-                "liveCatchUpPlaybackRate",
-                numValue / 100,
-              );
+              updateLowLatencySetting("liveCatchupPlaybackRate", {
+                ...lowLatencySettings.liveCatchupPlaybackRate,
+                min: numValue,
+              });
+            }
+          }}
+        />
+      </Container>
+      <Container
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Text color="white" marginRight={10}>
+          Max catch-up rate:
+        </Text>
+        <Input
+          width={100}
+          padding={8}
+          borderRadius={5}
+          backgroundColor="rgb(60,60,60)"
+          color="white"
+          value={lowLatencySettings.liveCatchupPlaybackRate.max.toString()}
+          onValueChange={(value) => {
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+              updateLowLatencySetting("liveCatchupPlaybackRate", {
+                ...lowLatencySettings.liveCatchupPlaybackRate,
+                max: numValue,
+              });
             }
           }}
         />

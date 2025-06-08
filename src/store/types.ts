@@ -224,10 +224,12 @@ export interface LanguageSettings {
 }
 
 export interface LowLatencySettings {
-  lowLatencyEnabled: boolean;
   liveDelay: number;
-  liveCatchUpMinDrift: number;
-  liveCatchUpPlaybackRate: number;
+  liveCatchupMaxDrift: number;
+  liveCatchupPlaybackRate: {
+    min: number;
+    max: number;
+  };
 }
 
 export interface ParentalSettings {

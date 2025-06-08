@@ -29,10 +29,12 @@ const initialState: AppState = {
     accessibleAudio: false,
   },
   lowLatencySettings: {
-    lowLatencyEnabled: false,
     liveDelay: 3,
-    liveCatchUpMinDrift: 0.05,
-    liveCatchUpPlaybackRate: 0.5,
+    liveCatchupMaxDrift: 0.05,
+    liveCatchupPlaybackRate: {
+      min: -0.5,
+      max: 0.5,
+    },
   },
   parentalSettings: {
     parentalEnabled: false,
@@ -564,13 +566,24 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
           onTextTracksAdded,
         );
 
-        // Setup initial language settings
-        const { languageSettings } = get();
+        // Setup initial language and low latency settings
+        const { languageSettings, lowLatencySettings } = get();
         newPlayerInstance.setInitialMediaSettingsFor("audio", {
           lang: languageSettings.audioLanguage,
         });
         newPlayerInstance.setInitialMediaSettingsFor("video", {
           lang: languageSettings.subtitleLanguage,
+        });
+        newPlayerInstance.updateSettings({
+          streaming: {
+            delay: {
+              liveDelay: lowLatencySettings.liveDelay,
+            },
+            liveCatchup: {
+              maxDrift: lowLatencySettings.liveCatchupMaxDrift,
+              playbackRate: lowLatencySettings.liveCatchupPlaybackRate,
+            },
+          },
         });
 
         set({ playerInstance: newPlayerInstance, isPlaying: false });
@@ -766,10 +779,40 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
       }
     }
   },
-  updateLowLatencySetting: (key, value) =>
-    set((state) => ({
-      lowLatencySettings: { ...state.lowLatencySettings, [key]: value },
-    })),
+  updateLowLatencySetting: (key, value) => {
+    const { playerInstance } = get();
+    const updatedSettings = { ...get().lowLatencySettings, [key]: value };
+
+    set({ lowLatencySettings: updatedSettings });
+
+    if (playerInstance) {
+      if (key === "liveDelay") {
+        playerInstance.updateSettings({
+          streaming: {
+            delay: {
+              liveDelay: value as number,
+            },
+          },
+        });
+      } else if (key === "liveCatchupMaxDrift") {
+        playerInstance.updateSettings({
+          streaming: {
+            liveCatchup: {
+              maxDrift: value as number,
+            },
+          },
+        });
+      } else if (key === "liveCatchupPlaybackRate") {
+        playerInstance.updateSettings({
+          streaming: {
+            liveCatchup: {
+              playbackRate: value as { min: number; max: number },
+            },
+          },
+        });
+      }
+    }
+  },
   updateParentalSetting: (key, value) =>
     set((state) => ({
       parentalSettings: { ...state.parentalSettings, [key]: value },
