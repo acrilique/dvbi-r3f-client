@@ -215,6 +215,27 @@ export interface ParsedServiceList {
   lcnTables?: LcnTableInfo[];
 }
 
+// --- Service List Provider & Registry Types ---
+export interface ServiceListOffering {
+  name: string;
+  url: string;
+  icons: MediaRepresentation[];
+  postcodeFiltering?: boolean;
+  regionIdFiltering?: boolean;
+  multiplexFiltering?: boolean;
+}
+
+export interface ProviderInfo {
+  name: string;
+  icons: MediaRepresentation[];
+  servicelists: ServiceListOffering[];
+}
+
+export interface ParsedProviderRegistry {
+  registryInfo: Partial<ProviderInfo>; // Info about the registry itself
+  providerList: ProviderInfo[]; // List of providers offering service lists
+}
+
 // --- Settings ---
 export interface LanguageSettings {
   audioLanguage: string;

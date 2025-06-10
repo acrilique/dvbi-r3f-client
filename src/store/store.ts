@@ -10,7 +10,10 @@ import {
   ParsedServiceList,
 } from "./types";
 import { MediaPlayer } from "dashjs";
-import { parseServiceListXml } from "../utils/serviceListParser";
+import {
+  parseServiceListProvidersXml,
+  parseServiceListXml,
+} from "../utils/serviceListParser";
 import {
   parseProgramInfoXml,
   parseScheduleXml,
@@ -89,7 +92,7 @@ export interface AppActions {
   fetchAndProcessServiceList: (newIdentifier?: string) => Promise<void>;
   setServiceListLoading: (isLoading: boolean) => void;
   setServiceListInfo: (info: AppState["serviceListInfo"]) => void;
-  discoverAvailableServiceLists: () => void;
+  discoverAvailableServiceLists: () => Promise<void>;
 
   // Channel Actions
   selectChannel: (channelId: string) => void;
@@ -334,22 +337,46 @@ export const useAppStore = create<AppState & AppActions>((set, get) => ({
   setServiceListLoading: (isLoading) =>
     set({ isLoadingServiceList: isLoading }),
   setServiceListInfo: (info) => set({ serviceListInfo: info }),
-  discoverAvailableServiceLists: () => {
-    const lists: AvailableServiceListEntry[] = [
-      { name: "Default (example.xml)", identifier: "example.xml" },
-      { name: "Advanced Codecs", identifier: "advanced_codecs.xml" },
-      { name: "DRM Protected", identifier: "drm.xml" },
-      { name: "Availability Example", identifier: "example_availability.xml" },
-      { name: "Prominence R6", identifier: "prominence_r6.xml" },
-      { name: "Regions Example", identifier: "regions.xml" },
-      {
-        name: "TM-STREAM0075r1 DVB-DASH",
-        identifier: "TM-STREAM0075r1 DVB-DASH_Reference_Streams.xml",
-      },
-      // To add an external list for testing:
-      // { name: "External Test List (URL)", identifier: "http://your-external-url.com/list.xml" }
-    ];
-    set({ availableServiceLists: lists });
+  discoverAvailableServiceLists: async () => {
+    const SERVICE_LIST_REGISTRY_URL =
+      "https://competition-csr.dvb-i.tv/api/query";
+    set({ isLoadingServiceList: true, globalError: null });
+    try {
+      const response = await fetch(SERVICE_LIST_REGISTRY_URL);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch service list registry: ${response.status} ${response.statusText}`,
+        );
+      }
+      const xmlString = await response.text();
+      const parsedRegistry = parseServiceListProvidersXml(xmlString);
+
+      const availableLists: AvailableServiceListEntry[] = [];
+      parsedRegistry.providerList.forEach((provider) => {
+        provider.servicelists.forEach((list) => {
+          availableLists.push({
+            name: `${provider.name} - ${list.name}`,
+            identifier: list.url,
+          });
+        });
+      });
+
+      set({
+        availableServiceLists: availableLists,
+        isLoadingServiceList: false,
+      });
+    } catch (error: unknown) {
+      console.error("Error discovering service lists:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to load service list registry.";
+      set({
+        globalError: message,
+        isLoadingServiceList: false,
+        availableServiceLists: [], // Clear lists on error
+      });
+    }
   },
 
   // --- Channel Actions ---

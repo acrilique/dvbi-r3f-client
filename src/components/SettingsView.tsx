@@ -29,7 +29,9 @@ const SettingsViewComponent: React.FC = () => {
 
   useEffect(() => {
     if (activePage && availableServiceLists.length === 0) {
-      discoverAvailableServiceLists();
+      discoverAvailableServiceLists().catch((error) => {
+        console.error("Error discovering service lists:", error);
+      });
     }
   }, [activePage, availableServiceLists, discoverAvailableServiceLists]);
 
@@ -464,6 +466,8 @@ const SettingsViewComponent: React.FC = () => {
       backgroundColor="rgb(0,0,0)"
       backgroundOpacity={0.8}
       renderOrder={3}
+      zIndexOffset={3}
+      pointerEventsOrder={3}
     >
       {pageContent}
     </Container>

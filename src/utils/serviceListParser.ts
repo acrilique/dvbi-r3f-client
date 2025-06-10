@@ -5,10 +5,14 @@ import {
   DrmSystemRepresentation,
   LcnTableInfo,
   MediaPresentationApp,
+  ParsedProviderRegistry,
   ParsedServiceList,
+  ProviderInfo,
   ProminenceInfo,
   RegionInfo,
   ServiceInstanceRepresentation,
+  ServiceListOffering,
+  MediaRepresentation,
 } from "../store/types";
 import {
   getChildElements,
@@ -594,6 +598,129 @@ export function parseServiceListXml(
     if (s.lcn === undefined || s.lcn < 0) {
       s.lcn = ++maxLcn;
     }
+  });
+
+  return result;
+}
+
+function parseProviderInfo(
+  providerInfoElements: Element[],
+  ns: string | undefined,
+): Partial<ProviderInfo> {
+  const info: Partial<ProviderInfo> = {
+    name: undefined,
+    icons: [],
+    servicelists: [],
+  };
+  if (providerInfoElements.length > 0) {
+    const providerInfoEl = providerInfoElements[0];
+    info.name =
+      getChildValue(providerInfoEl, "Name", ns)?.trim() || "Unnamed Provider";
+
+    const iconElements = getChildElements(providerInfoEl, "Icon", "*"); // Wildcard for namespace
+    info.icons = iconElements
+      .map((iconEl) => getMedia(iconEl))
+      .filter((media) => media !== null);
+  }
+  return info;
+}
+
+// --- Service List Provider Parser ---
+export function parseServiceListProvidersXml(
+  xmlString: string,
+): ParsedProviderRegistry {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlString, XML_MIME);
+  const result: ParsedProviderRegistry = {
+    registryInfo: {},
+    providerList: [],
+  };
+
+  // Use wildcard for namespaces to match reference implementation's flexibility
+  const ns = undefined;
+  const servicediscoveryNS = undefined;
+
+  const registryEntity = getChildElements(
+    doc.documentElement,
+    "ServiceListRegistryEntity",
+    ns,
+  );
+  result.registryInfo = parseProviderInfo(registryEntity, ns);
+
+  const providerOfferings = getChildElements(
+    doc.documentElement,
+    "ProviderOffering",
+    ns,
+  );
+
+  result.providerList = providerOfferings.map((providerOfferingEl) => {
+    const providerInfoElements = getChildElements(
+      providerOfferingEl,
+      "Provider",
+      ns,
+    );
+    const info = parseProviderInfo(providerInfoElements, ns);
+
+    const serviceListOfferingElements = getChildElements(
+      providerOfferingEl,
+      "ServiceListOffering",
+      ns,
+    );
+
+    const servicelists: ServiceListOffering[] = serviceListOfferingElements.map(
+      (listEl) => {
+        const list: Partial<ServiceListOffering> = {};
+        list.name =
+          getChildValue(listEl, "ServiceListName", ns)?.trim() ||
+          "Unnamed List";
+
+        const serviceListURIEl = getChildElement(listEl, "ServiceListURI", ns);
+        if (serviceListURIEl) {
+          list.url =
+            getChildValue(
+              serviceListURIEl,
+              "URI",
+              servicediscoveryNS,
+            )?.trim() || "";
+        } else {
+          list.url = "";
+        }
+
+        const listIcons: MediaRepresentation[] = [];
+        const relatedMaterial = getChildElements(listEl, "RelatedMaterial", ns);
+        relatedMaterial.forEach((rmEl) => {
+          const howRelated = getChildValue(rmEl, "HowRelated", "*", "href");
+          if (howRelated === "urn:dvb:metadata:cs:HowRelatedCS:2020:1001.1") {
+            const mediaLocators = getChildElements(rmEl, "MediaLocator", "*");
+            mediaLocators.forEach((mlEl) => {
+              const media = getMedia(mlEl);
+              if (media) {
+                listIcons.push(media);
+              }
+            });
+          }
+        });
+        list.icons = listIcons;
+
+        const srsSupport = getChildElement(listEl, "SRSSupport", ns);
+        if (srsSupport) {
+          list.postcodeFiltering =
+            srsSupport.getAttribute("postcode") === "true";
+          list.regionIdFiltering =
+            srsSupport.getAttribute("regionID") === "true";
+          list.multiplexFiltering =
+            srsSupport.getAttribute("receivedMultiplex") === "true";
+        }
+
+        return list as ServiceListOffering;
+      },
+    );
+
+    return {
+      name: info.name || "Unknown Provider",
+      icons: info.icons || [],
+      servicelists: servicelists,
+    };
   });
 
   return result;
