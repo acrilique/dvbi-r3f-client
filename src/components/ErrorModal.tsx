@@ -19,6 +19,8 @@ const ErrorModalComponent: React.FC = () => {
       backgroundColor="rgb(0,0,0)"
       backgroundOpacity={0.8}
       renderOrder={4}
+      zIndexOffset={4}
+      pointerEventsOrder={4}
     >
       <Container
         alignSelf="center"

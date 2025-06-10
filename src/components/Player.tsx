@@ -54,6 +54,27 @@ export function Player() {
     null,
   );
 
+  const isPlaying = useAppStore((state) => state.isPlaying);
+  const playerInstance = useAppStore((state) => state.playerInstance);
+  const setGlobalError = useAppStore((state) => state.setGlobalError);
+
+  const handlePlayPause = useCallback(() => {
+    try {
+      if (playerInstance) {
+        if (isPlaying) {
+          playerInstance.pause();
+        } else {
+          playerInstance.play();
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling play/pause from component:", error);
+      setGlobalError(
+        "Failed to toggle play/pause. Content might be unavailable.",
+      );
+    }
+  }, [isPlaying, playerInstance, setGlobalError]);
+
   // Create and manage the video element's lifecycle
   useEffect(() => {
     const video = document.createElement("video");
@@ -141,6 +162,9 @@ export function Player() {
             height="100%"
             backgroundColor="#000"
             renderOrder={0}
+            zIndexOffset={0}
+            pointerEventsOrder={0}
+            onClick={handlePlayPause}
           />
           {/* Background Video Player */}
           {isStreamInitialized && videoElement != null && (
@@ -150,8 +174,11 @@ export function Player() {
               height="100%"
               flexDirection={"row"}
               alignItems={"center"}
+              renderOrder={1}
+              zIndexOffset={1}
+              pointerEventsOrder={1}
             >
-              <Video src={videoElement} width="100%" renderOrder={1} />
+              <Video src={videoElement} width="100%" />
             </Container>
           )}
 
@@ -159,6 +186,8 @@ export function Player() {
             opacity={opacitySignal}
             scrollbarOpacity={opacitySignal}
             renderOrder={2}
+            zIndexOffset={2}
+            pointerEventsOrder={2}
           >
             {/* UI Overlay */}
             <Container
